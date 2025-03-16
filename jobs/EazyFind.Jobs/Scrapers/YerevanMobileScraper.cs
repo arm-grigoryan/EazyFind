@@ -1,0 +1,131 @@
+﻿using EazyFind.Domain.Entities;
+using EazyFind.Jobs.Configuration;
+using EazyFind.Jobs.Constants;
+using EazyFind.Jobs.Scrapers.Interfaces;
+using HtmlAgilityPack;
+using Microsoft.Extensions.Options;
+using System.Text.RegularExpressions;
+
+namespace EazyFind.Jobs.Scrapers;
+
+public class YerevanMobileScraper : IScraper
+{
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly JobConfigs _jobConfigs;
+
+    public YerevanMobileScraper(
+        IHttpClientFactory httpClientFactory,
+        IOptions<JobConfigs> options)
+    {
+        _httpClientFactory = httpClientFactory;
+        _jobConfigs = options.Value;
+    }
+
+    public async Task<List<Product>> ScrapeAsync(string pageUrl, CancellationToken cancellationToken)
+    {
+        var httpClient = _httpClientFactory.CreateClient(nameof(YerevanMobileScraper));
+
+        var paginationPart = "p=";
+        var pageNumber = 1;
+
+        List<Product> internalProducts = [];
+
+        while (true)
+        {
+            try
+            {
+                var htmlString = await httpClient.GetStringAsync($"{pageUrl}?{paginationPart}{pageNumber}", cancellationToken);
+
+                var htmlDoc = new HtmlDocument();
+                htmlDoc.LoadHtml(htmlString);
+
+                var products = htmlDoc.DocumentNode.Descendants("div")
+                                                   .Where(x => x.HasClass("product-item-info"));
+
+                if (products?.Any() is not true)
+                {
+                    Console.WriteLine(string.Format(LogMessages.ProductsNotScraped, nameof(YerevanMobileScraper)));
+                    break;
+                }
+
+                var index = 0;
+                var errorCount = 0;
+                foreach (var product in products)
+                {
+                    try
+                    {
+                        var itemATagElement = product.Descendants("a")
+                                                     .First(x => x.HasClass("product-item-link"));
+
+                        var productUrl = itemATagElement.GetAttributeValue("href", string.Empty);
+
+                        if (internalProducts.Exists(p => p.Url.Equals(productUrl, StringComparison.InvariantCultureIgnoreCase)))
+                        {
+                            Console.WriteLine($"{nameof(YerevanMobileScraper)} finished scraping on pageItems {pageNumber}.");
+                            return internalProducts;
+                        }
+
+                        var imageUrl = product.Descendants("img")
+                                              .First(x => x.HasClass("product-image-photo"))
+                                              .GetAttributeValue("src", string.Empty);
+
+                        var name = itemATagElement.InnerText.Trim();
+
+                        var priceText = product.Descendants("span")
+                                               .FirstOrDefault(x => x.GetClasses().Any(x => x == "price"))
+                                               ?.InnerText
+                                               .Trim();
+
+                        var parsed = false;
+                        decimal price = 0;
+                        if (priceText is not null)
+                        {
+
+                            var cleanPriceText = Regex.Replace(priceText, @"[^\d]", "").Replace(" ", string.Empty);
+
+                            parsed = decimal.TryParse(cleanPriceText, out price);
+                        }
+
+                        var internalProduct = new Product
+                        {
+                            Url = productUrl,
+                            ImageUrl = imageUrl,
+                            Name = name,
+                            Price = parsed ? price : decimal.Zero,
+                        };
+
+                        internalProducts.Add(internalProduct);
+                        index++;
+                        errorCount = 0;
+
+                        Console.WriteLine(internalProduct);
+                    }
+                    catch (Exception ex)
+                    {
+                        errorCount++;
+                        Console.WriteLine(string.Format(LogMessages.ExceptionOccuredCollectingProductInfo,
+                                          nameof(YerevanMobileScraper), 0, index, product.InnerHtml, ex));
+
+                        if (errorCount > _jobConfigs.MaxErrorCountToContinue)
+                        {
+                            throw new Exception(string.Format(LogMessages.MaxCountOfErrorsReached,
+                                                nameof(YerevanMobileScraper),
+                                                _jobConfigs.MaxErrorCountToContinue), ex);
+                        }
+                        continue;
+                    }
+                }
+
+                pageNumber++;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(string.Format(LogMessages.ExceptionOccuredDuringExecution, nameof(YerevanMobileScraper), ex));
+                break;
+            }
+        }
+
+        Console.WriteLine(string.Format(LogMessages.TotalScrapedSuccessfully, nameof(YerevanMobileScraper), internalProducts.Count));
+        return internalProducts;
+    }
+}

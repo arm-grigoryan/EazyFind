@@ -1,0 +1,6 @@
+@EazyFind.Jobs_HostAddress = http://localhost:5194
+
+GET {{EazyFind.Jobs_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

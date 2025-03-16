@@ -1,0 +1,59 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35514.174 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AC9E5FB5-BB64-4EDC-A5EB-53315267D4D5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{6FCB1FB7-31AF-44D3-B2D2-135637383D64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EazyFind.API", "src\EazyFind.API\EazyFind.API.csproj", "{167BABD3-5DB1-4288-BCB7-439479A0E333}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EazyFind.Application", "src\EazyFind.Application\EazyFind.Application.csproj", "{506672CB-96E7-4B2B-BDE5-BA7DB471CA8D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EazyFind.Domain", "src\EazyFind.Domain\EazyFind.Domain.csproj", "{0DC399E8-8CD2-4466-8CBE-BD47AC360DA0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EazyFind.Infrastructure", "src\EazyFind.Infrastructure\EazyFind.Infrastructure.csproj", "{E063BE82-27E2-4938-93BA-10EB6925A8F1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{A2E94251-732D-4608-A465-E9A071DEEF03}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EazyFind.Jobs", "jobs\EazyFind.Jobs\EazyFind.Jobs.csproj", "{D77BA309-1B6F-4F34-A423-BC2934BB3DE8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{167BABD3-5DB1-4288-BCB7-439479A0E333}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{167BABD3-5DB1-4288-BCB7-439479A0E333}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{167BABD3-5DB1-4288-BCB7-439479A0E333}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{167BABD3-5DB1-4288-BCB7-439479A0E333}.Release|Any CPU.Build.0 = Release|Any CPU
+		{506672CB-96E7-4B2B-BDE5-BA7DB471CA8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{506672CB-96E7-4B2B-BDE5-BA7DB471CA8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{506672CB-96E7-4B2B-BDE5-BA7DB471CA8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{506672CB-96E7-4B2B-BDE5-BA7DB471CA8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DC399E8-8CD2-4466-8CBE-BD47AC360DA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DC399E8-8CD2-4466-8CBE-BD47AC360DA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DC399E8-8CD2-4466-8CBE-BD47AC360DA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DC399E8-8CD2-4466-8CBE-BD47AC360DA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E063BE82-27E2-4938-93BA-10EB6925A8F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E063BE82-27E2-4938-93BA-10EB6925A8F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E063BE82-27E2-4938-93BA-10EB6925A8F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E063BE82-27E2-4938-93BA-10EB6925A8F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D77BA309-1B6F-4F34-A423-BC2934BB3DE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D77BA309-1B6F-4F34-A423-BC2934BB3DE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D77BA309-1B6F-4F34-A423-BC2934BB3DE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D77BA309-1B6F-4F34-A423-BC2934BB3DE8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{167BABD3-5DB1-4288-BCB7-439479A0E333} = {AC9E5FB5-BB64-4EDC-A5EB-53315267D4D5}
+		{506672CB-96E7-4B2B-BDE5-BA7DB471CA8D} = {AC9E5FB5-BB64-4EDC-A5EB-53315267D4D5}
+		{0DC399E8-8CD2-4466-8CBE-BD47AC360DA0} = {AC9E5FB5-BB64-4EDC-A5EB-53315267D4D5}
+		{E063BE82-27E2-4938-93BA-10EB6925A8F1} = {AC9E5FB5-BB64-4EDC-A5EB-53315267D4D5}
+		{D77BA309-1B6F-4F34-A423-BC2934BB3DE8} = {A2E94251-732D-4608-A465-E9A071DEEF03}
+	EndGlobalSection
+EndGlobal

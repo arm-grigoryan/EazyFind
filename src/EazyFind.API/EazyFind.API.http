@@ -1,0 +1,6 @@
+@EazyFind.API_HostAddress = http://localhost:5165
+
+GET {{EazyFind.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
