@@ -66,8 +66,8 @@ namespace EazyFind.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("DECIMAL(10,2)");

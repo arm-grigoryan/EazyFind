@@ -11,13 +11,16 @@ namespace EazyFind.Jobs.Scrapers;
 public class MobileCentreScraper : IScraper
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly JobConfigs _jobConfigs;
+    private readonly ILogger<MobileCentreScraper> _logger;
+    private readonly ScraperConfigs _jobConfigs;
 
     public MobileCentreScraper(
         IHttpClientFactory httpClientFactory,
-        IOptions<JobConfigs> options)
+        ILogger<MobileCentreScraper> logger,
+        IOptions<ScraperConfigs> options)
     {
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
         _jobConfigs = options.Value;
     }
 
@@ -39,7 +42,7 @@ public class MobileCentreScraper : IScraper
 
             if (products?.Any() is not true)
             {
-                Console.WriteLine(string.Format(LogMessages.ProductsNotScraped, nameof(MobileCentreScraper)));
+                _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(MobileCentreScraper));
                 return internalProducts;
             }
 
@@ -100,13 +103,13 @@ public class MobileCentreScraper : IScraper
                     index++;
                     errorCount = 0;
 
-                    Console.WriteLine(internalProduct);
+                    //Console.WriteLine(internalProduct);
                 }
                 catch (Exception ex)
                 {
                     errorCount++;
-                    Console.WriteLine(string.Format(LogMessages.ExceptionOccuredCollectingProductInfo,
-                                      nameof(MobileCentreScraper), 0, index, product.InnerHtml, ex));
+                    _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
+                                    nameof(MobileCentreScraper), 0, index, product.InnerHtml);
 
                     if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                     {
@@ -120,11 +123,11 @@ public class MobileCentreScraper : IScraper
         }
         catch (Exception ex)
         {
-            Console.WriteLine(string.Format(LogMessages.ExceptionOccuredDuringExecution, nameof(MobileCentreScraper), ex));
+            _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(MobileCentreScraper));
             return internalProducts;
         }
 
-        Console.WriteLine(string.Format(LogMessages.TotalScrapedSuccessfully, nameof(MobileCentreScraper), internalProducts.Count));
+        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(MobileCentreScraper), internalProducts.Count);
         return internalProducts;
     }
 }

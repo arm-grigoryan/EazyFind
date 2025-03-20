@@ -11,13 +11,16 @@ namespace EazyFind.Jobs.Scrapers;
 public class YerevanMobileScraper : IScraper
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly JobConfigs _jobConfigs;
+    private readonly ILogger<YerevanMobileScraper> _logger;
+    private readonly ScraperConfigs _jobConfigs;
 
     public YerevanMobileScraper(
         IHttpClientFactory httpClientFactory,
-        IOptions<JobConfigs> options)
+        ILogger<YerevanMobileScraper> logger,
+        IOptions<ScraperConfigs> options)
     {
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
         _jobConfigs = options.Value;
     }
 
@@ -44,7 +47,7 @@ public class YerevanMobileScraper : IScraper
 
                 if (products?.Any() is not true)
                 {
-                    Console.WriteLine(string.Format(LogMessages.ProductsNotScraped, nameof(YerevanMobileScraper)));
+                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(YerevanMobileScraper));
                     break;
                 }
 
@@ -61,7 +64,7 @@ public class YerevanMobileScraper : IScraper
 
                         if (internalProducts.Exists(p => p.Url.Equals(productUrl, StringComparison.InvariantCultureIgnoreCase)))
                         {
-                            Console.WriteLine($"{nameof(YerevanMobileScraper)} finished scraping on pageItems {pageNumber}.");
+                            _logger.LogInformation(LogMessages.FinishedScrapingPageItems, nameof(YerevanMobileScraper), pageNumber);
                             return internalProducts;
                         }
 
@@ -98,13 +101,13 @@ public class YerevanMobileScraper : IScraper
                         index++;
                         errorCount = 0;
 
-                        Console.WriteLine(internalProduct);
+                        //Console.WriteLine(internalProduct);
                     }
                     catch (Exception ex)
                     {
                         errorCount++;
-                        Console.WriteLine(string.Format(LogMessages.ExceptionOccuredCollectingProductInfo,
-                                          nameof(YerevanMobileScraper), 0, index, product.InnerHtml, ex));
+                        _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
+                                        nameof(YerevanMobileScraper), 0, index, product.InnerHtml);
 
                         if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                         {
@@ -120,12 +123,12 @@ public class YerevanMobileScraper : IScraper
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(LogMessages.ExceptionOccuredDuringExecution, nameof(YerevanMobileScraper), ex));
+                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(YerevanMobileScraper));
                 break;
             }
         }
 
-        Console.WriteLine(string.Format(LogMessages.TotalScrapedSuccessfully, nameof(YerevanMobileScraper), internalProducts.Count));
+        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(YerevanMobileScraper), internalProducts.Count);
         return internalProducts;
     }
 }

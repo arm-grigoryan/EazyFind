@@ -11,13 +11,16 @@ namespace EazyFind.Jobs.Scrapers;
 public class VDComputersScraper : IScraper
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly JobConfigs _jobConfigs;
+    private readonly ILogger<VDComputersScraper> _logger;
+    private readonly ScraperConfigs _jobConfigs;
 
     public VDComputersScraper(
         IHttpClientFactory httpClientFactory,
-        IOptions<JobConfigs> options)
+        ILogger<VDComputersScraper> logger,
+        IOptions<ScraperConfigs> options)
     {
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
         _jobConfigs = options.Value;
     }
 
@@ -46,7 +49,7 @@ public class VDComputersScraper : IScraper
 
                 if (products?.Any() is not true)
                 {
-                    Console.WriteLine(string.Format(LogMessages.ProductsNotScraped, nameof(VDComputersScraper)));
+                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(VDComputersScraper));
                     break;
                 }
 
@@ -99,13 +102,13 @@ public class VDComputersScraper : IScraper
                         index++;
                         errorCount = 0;
 
-                        Console.WriteLine(internalProduct);
+                        //Console.WriteLine(internalProduct);
                     }
                     catch (Exception ex)
                     {
                         errorCount++;
-                        Console.WriteLine(string.Format(LogMessages.ExceptionOccuredCollectingProductInfo,
-                                          nameof(VDComputersScraper), 0, index, product.InnerHtml, ex));
+                        _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
+                                        nameof(VDComputersScraper), pageNumber, index, product.InnerHtml);
 
                         if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                         {
@@ -121,12 +124,12 @@ public class VDComputersScraper : IScraper
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(LogMessages.ExceptionOccuredDuringExecution, nameof(VDComputersScraper), ex));
+                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(VDComputersScraper));
                 break;
             }
         }
 
-        Console.WriteLine(string.Format(LogMessages.TotalScrapedSuccessfully, nameof(VDComputersScraper), internalProducts.Count));
+        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(VDComputersScraper), internalProducts.Count);
         return internalProducts;
     }
 }

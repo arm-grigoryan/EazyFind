@@ -11,13 +11,16 @@ namespace EazyFind.Jobs.Scrapers;
 public class VegaScraper : IScraper
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly JobConfigs _jobConfigs;
+    private readonly ILogger<VegaScraper> _logger;
+    private readonly ScraperConfigs _jobConfigs;
 
     public VegaScraper(
         IHttpClientFactory httpClientFactory,
-        IOptions<JobConfigs> options)
+        ILogger<VegaScraper> logger,
+        IOptions<ScraperConfigs> options)
     {
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
         _jobConfigs = options.Value;
     }
 
@@ -50,7 +53,7 @@ public class VegaScraper : IScraper
 
                 if (products?.Any() is not true)
                 {
-                    Console.WriteLine(string.Format(LogMessages.ProductsNotScraped, nameof(VegaScraper)));
+                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(VegaScraper));
                     break;
                 }
 
@@ -102,13 +105,13 @@ public class VegaScraper : IScraper
                         index++;
                         errorCount = 0;
 
-                        Console.WriteLine(internalProduct);
+                        //Console.WriteLine(internalProduct);
                     }
                     catch (Exception ex)
                     {
                         errorCount++;
-                        Console.WriteLine(string.Format(LogMessages.ExceptionOccuredCollectingProductInfo,
-                                          nameof(VegaScraper), 0, index, product.InnerHtml, ex));
+                        _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
+                                        nameof(VegaScraper), pageNumber, index, product.InnerHtml);
 
                         if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                         {
@@ -124,12 +127,12 @@ public class VegaScraper : IScraper
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(LogMessages.ExceptionOccuredDuringExecution, nameof(VegaScraper), ex));
+                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(VegaScraper));
                 break;
             }
         }
 
-        Console.WriteLine(string.Format(LogMessages.TotalScrapedSuccessfully, nameof(VegaScraper), internalProducts.Count));
+        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(VegaScraper), internalProducts.Count);
         return internalProducts;
     }
 }

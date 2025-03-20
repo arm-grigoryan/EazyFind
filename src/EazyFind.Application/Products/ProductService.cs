@@ -6,6 +6,11 @@ namespace EazyFind.Application.Products;
 
 internal class ProductService(IProductRepository repository) : IProductService
 {
+    public Task<Dictionary<string, Product>> GetByStoreAsync(StoreKey store, CancellationToken cancellationToken)
+    {
+        return repository.GetByStoreAsync(store, cancellationToken);
+    }
+
     public Task<Dictionary<string, Product>> GetByStoreAndCategoryAsync(StoreKey store, CategoryType category, CancellationToken cancellationToken)
     {
         return repository.GetByStoreAndCategoryAsync(store, category, cancellationToken);

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EazyFind.Infrastructure.Migrations
 {
     [DbContext(typeof(EazyFindDbContext))]
-    [Migration("20250316203154_InitialDatabaseSetup")]
+    [Migration("20250317211943_InitialDatabaseSetup")]
     partial class InitialDatabaseSetup
     {
         /// <inheritdoc />
@@ -69,8 +69,8 @@ namespace EazyFind.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("DECIMAL(10,2)");

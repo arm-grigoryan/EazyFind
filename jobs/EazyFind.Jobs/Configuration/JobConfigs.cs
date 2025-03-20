@@ -1,6 +1,8 @@
-﻿namespace EazyFind.Jobs.Configuration;
+﻿using EazyFind.Domain.Enums;
+
+namespace EazyFind.Jobs.Configuration;
 
 public class JobConfigs
 {
-    public int MaxErrorCountToContinue { get; set; }
+    public Dictionary<CategoryType, string> CategorySchedules { get; set; }
 }

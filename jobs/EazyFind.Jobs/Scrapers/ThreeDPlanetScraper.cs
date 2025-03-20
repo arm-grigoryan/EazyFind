@@ -11,13 +11,16 @@ namespace EazyFind.Jobs.Scrapers;
 public class ThreeDPlanetScraper : IScraper
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly JobConfigs _jobConfigs;
+    private readonly ILogger<ThreeDPlanetScraper> _logger;
+    private readonly ScraperConfigs _jobConfigs;
 
     public ThreeDPlanetScraper(
         IHttpClientFactory httpClientFactory,
-        IOptions<JobConfigs> options)
+        ILogger<ThreeDPlanetScraper> logger,
+        IOptions<ScraperConfigs> options)
     {
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
         _jobConfigs = options.Value;
     }
 
@@ -34,7 +37,7 @@ public class ThreeDPlanetScraper : IScraper
         {
             try
             {
-                var htmlString = await httpClient.GetStringAsync($"{pageUrl}{string.Format(paginationPart, pageNumber)}", cancellationToken);
+                var htmlString = await httpClient.GetStringAsync($"{pageUrl}{string.Format(paginationPart, pageNumber)}?per_page=36", cancellationToken);
 
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlString);
@@ -44,7 +47,7 @@ public class ThreeDPlanetScraper : IScraper
 
                 if (products?.Any() is not true)
                 {
-                    Console.WriteLine(string.Format(LogMessages.ProductsNotScraped, nameof(ThreeDPlanetScraper)));
+                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(ThreeDPlanetScraper));
                     break;
                 }
 
@@ -91,13 +94,13 @@ public class ThreeDPlanetScraper : IScraper
                         index++;
                         errorCount = 0;
 
-                        Console.WriteLine(internalProduct);
+                        //Console.WriteLine(internalProduct);
                     }
                     catch (Exception ex)
                     {
                         errorCount++;
-                        Console.WriteLine(string.Format(LogMessages.ExceptionOccuredCollectingProductInfo,
-                                          nameof(ThreeDPlanetScraper), 0, index, product.InnerHtml, ex));
+                        _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
+                                        nameof(ThreeDPlanetScraper), pageNumber, index, product.InnerHtml);
 
                         if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                         {
@@ -113,12 +116,12 @@ public class ThreeDPlanetScraper : IScraper
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(LogMessages.ExceptionOccuredDuringExecution, nameof(ThreeDPlanetScraper), ex));
+                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(ThreeDPlanetScraper));
                 break;
             }
         }
 
-        Console.WriteLine(string.Format(LogMessages.TotalScrapedSuccessfully, nameof(ThreeDPlanetScraper), internalProducts.Count));
+        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(ThreeDPlanetScraper), internalProducts.Count);
         return internalProducts;
     }
 }

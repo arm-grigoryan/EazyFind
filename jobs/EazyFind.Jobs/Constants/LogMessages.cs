@@ -2,10 +2,12 @@
 
 public static class LogMessages
 {
-    public const string ProductsNotScraped = "{0}: No Products found. Finish scraping.";
-    public const string ExceptionOccuredDuringExecution = "{0}: Exception occured during execution: {1}";
+    public const string ProductsNotScraped = "{Scraper}: No Products found. Finish scraping.";
+    public const string ExceptionOccuredDuringExecution = "{Scraper}: Exception occured during execution.";
     public const string ExceptionOccuredCollectingProductInfo =
-        "{0}: Exception occured collecting product info: PageNumber: {1}, ProductNumber: {2}, ProductHtml: {3}, ex: {4}";
-    public const string TotalScrapedSuccessfully = "{0}: Total {1} products scraped successfully.";
+        "{Scraper}: Exception occured collecting product info: PageNumber: {PageNumber}, ProductNumber: {ProductNumber}, ProductHtml: {ProductHtml}";
+    public const string FinishedScrapingPageItems = "{Scraper} finished scraping on pageItems {PageNumber}.";
+    public const string TotalScrapedSuccessfully = "{Scraper}: Total {Count} products scraped successfully.";
+    public const string ReturnedStatusCode = "{Scraper} returned status code: {StatusCode}. Reason: {ReasonPhrase}.";
     public const string MaxCountOfErrorsReached = "{0}: Maximum count {1} of errors reached. Stop scraping.";
 }

@@ -5,6 +5,7 @@ namespace EazyFind.Domain.Interfaces.Repositories;
 
 public interface IProductRepository
 {
+    Task<Dictionary<string, Product>> GetByStoreAsync(StoreKey store, CancellationToken cancellationToken);
     Task<Dictionary<string, Product>> GetByStoreAndCategoryAsync(StoreKey store, CategoryType category, CancellationToken cancellationToken);
     Task BulkAddProductsAsync(List<Product> products, CancellationToken cancellationToken);
     Task BulkUpdateProductsAsync(List<Product> products, CancellationToken cancellationToken);

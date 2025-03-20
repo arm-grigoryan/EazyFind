@@ -10,13 +10,16 @@ namespace EazyFind.Jobs.Scrapers;
 public class RedStoreScraper : IScraper
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly JobConfigs _jobConfigs;
+    private readonly ILogger<RedStoreScraper> _logger;
+    private readonly ScraperConfigs _jobConfigs;
 
     public RedStoreScraper(
         IHttpClientFactory httpClientFactory,
-        IOptions<JobConfigs> options)
+        ILogger<RedStoreScraper> logger,
+        IOptions<ScraperConfigs> options)
     {
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
         _jobConfigs = options.Value;
     }
 
@@ -46,7 +49,7 @@ public class RedStoreScraper : IScraper
 
                 if (products?.Any() is not true)
                 {
-                    Console.WriteLine(string.Format(LogMessages.ProductsNotScraped, nameof(RedStoreScraper)));
+                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(RedStoreScraper));
                     break;
                 }
 
@@ -91,13 +94,13 @@ public class RedStoreScraper : IScraper
                         index++;
                         errorCount = 0;
 
-                        Console.WriteLine(internalProduct);
+                        //Console.WriteLine(internalProduct);
                     }
                     catch (Exception ex)
                     {
                         errorCount++;
-                        Console.WriteLine(string.Format(LogMessages.ExceptionOccuredCollectingProductInfo,
-                                          nameof(RedStoreScraper), 0, index, product.InnerHtml, ex));
+                        _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
+                                        nameof(RedStoreScraper), pageNumber, index, product.InnerHtml);
 
                         if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                         {
@@ -113,12 +116,12 @@ public class RedStoreScraper : IScraper
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(LogMessages.ExceptionOccuredDuringExecution, nameof(RedStoreScraper), ex));
+                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(RedStoreScraper));
                 break;
             }
         }
 
-        Console.WriteLine(string.Format(LogMessages.TotalScrapedSuccessfully, nameof(RedStoreScraper), internalProducts.Count));
+        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(RedStoreScraper), internalProducts.Count);
         return internalProducts;
     }
 }

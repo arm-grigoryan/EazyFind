@@ -7,6 +7,14 @@ namespace EazyFind.Infrastructure.Data.Repositories;
 
 internal class ProductRepository(EazyFindDbContext dbContext) : IProductRepository
 {
+    public Task<Dictionary<string, Product>> GetByStoreAsync(StoreKey store, CancellationToken cancellationToken)
+    {
+        return dbContext.Products.AsNoTracking()
+            .Where(p => p.StoreCategory.StoreKey == store)
+            .Include(p => p.StoreCategory)
+            .ToDictionaryAsync(p => p.Url, cancellationToken);
+    }
+
     public Task<Dictionary<string, Product>> GetByStoreAndCategoryAsync(StoreKey store, CategoryType category, CancellationToken cancellationToken)
     {
         return dbContext.Products.AsNoTracking()

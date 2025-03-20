@@ -11,13 +11,16 @@ namespace EazyFind.Jobs.Scrapers;
 public class ZigzagScraper : IScraper
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly JobConfigs _jobConfigs;
+    private readonly ILogger<ZigzagScraper> _logger;
+    private readonly ScraperConfigs _jobConfigs;
 
     public ZigzagScraper(
         IHttpClientFactory httpClientFactory,
-        IOptions<JobConfigs> options)
+        ILogger<ZigzagScraper> logger,
+        IOptions<ScraperConfigs> options)
     {
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
         _jobConfigs = options.Value;
     }
 
@@ -34,7 +37,7 @@ public class ZigzagScraper : IScraper
         {
             try
             {
-                var htmlString = await httpClient.GetStringAsync($"{pageUrl}&{paginationPart}{pageNumber}");
+                var htmlString = await httpClient.GetStringAsync($"{pageUrl}?{paginationPart}{pageNumber}");
 
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlString);
@@ -44,7 +47,7 @@ public class ZigzagScraper : IScraper
 
                 if (products?.Any() is not true)
                 {
-                    Console.WriteLine(string.Format(LogMessages.ProductsNotScraped, nameof(ZigzagScraper)));
+                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(ZigzagScraper));
                     break;
                 }
 
@@ -61,7 +64,7 @@ public class ZigzagScraper : IScraper
 
                         if (internalProducts.Exists(p => p.Url.Equals(productUrl, StringComparison.InvariantCultureIgnoreCase)))
                         {
-                            Console.WriteLine($"{nameof(ZigzagScraper)} finished scraping on pageItems {pageNumber}.");
+                            _logger.LogInformation(LogMessages.FinishedScrapingPageItems, nameof(ZigzagScraper), pageNumber);
                             return internalProducts;
                         }
 
@@ -98,13 +101,13 @@ public class ZigzagScraper : IScraper
                         index++;
                         errorCount = 0;
 
-                        Console.WriteLine(internalProduct);
+                        //Console.WriteLine(internalProduct);
                     }
                     catch (Exception ex)
                     {
                         errorCount++;
-                        Console.WriteLine(string.Format(LogMessages.ExceptionOccuredCollectingProductInfo,
-                                          nameof(ZigzagScraper), 0, index, product.InnerHtml, ex));
+                        _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
+                                        nameof(ZigzagScraper), 0, index, product.InnerHtml);
 
                         if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                         {
@@ -120,12 +123,12 @@ public class ZigzagScraper : IScraper
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(LogMessages.ExceptionOccuredDuringExecution, nameof(ZigzagScraper), ex));
+                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(ZigzagScraper));
                 break;
             }
         }
 
-        Console.WriteLine(string.Format(LogMessages.TotalScrapedSuccessfully, nameof(ZigzagScraper), internalProducts.Count));
+        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(ZigzagScraper), internalProducts.Count);
         return internalProducts;
     }
 }

@@ -12,13 +12,16 @@ namespace EazyFind.Jobs.Scrapers;
 public class VLVApiScraper : IScraper
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly JobConfigs _jobConfigs;
+    private readonly ILogger<VLVApiScraper> _logger;
+    private readonly ScraperConfigs _jobConfigs;
 
     public VLVApiScraper(
         IHttpClientFactory httpClientFactory,
-        IOptions<JobConfigs> options)
+        ILogger<VLVApiScraper> logger,
+        IOptions<ScraperConfigs> options)
     {
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
         _jobConfigs = options.Value;
     }
 
@@ -61,7 +64,7 @@ public class VLVApiScraper : IScraper
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"{nameof(VLVApiScraper)} returned status code: {response.StatusCode}. Reason: {response.ReasonPhrase}");
+                    _logger.LogInformation(LogMessages.ReturnedStatusCode, nameof(VLVApiScraper), response.StatusCode, response.ReasonPhrase);
                     return internalProducts;
                 }
 
@@ -70,7 +73,7 @@ public class VLVApiScraper : IScraper
 
                 if (products?.Products?.Count is not > 0)
                 {
-                    Console.WriteLine(string.Format(LogMessages.ProductsNotScraped, nameof(VLVApiScraper)));
+                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(VLVApiScraper));
                     break;
                 }
 
@@ -100,13 +103,13 @@ public class VLVApiScraper : IScraper
                         index++;
                         errorCount = 0;
 
-                        Console.WriteLine(internalProduct);
+                        //Console.WriteLine(internalProduct);
                     }
                     catch (Exception ex)
                     {
                         errorCount++;
-                        Console.WriteLine(string.Format(LogMessages.ExceptionOccuredCollectingProductInfo,
-                                          nameof(VLVApiScraper), 0, index, product.SellerId, ex));
+                        _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
+                                        nameof(VLVApiScraper), pageNumber, index, product.SellerId);
 
                         if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                         {
@@ -122,12 +125,12 @@ public class VLVApiScraper : IScraper
             }
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format(LogMessages.ExceptionOccuredDuringExecution, nameof(VLVApiScraper), ex));
+                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(VLVApiScraper));
                 break;
             }
         }
 
-        Console.WriteLine(string.Format(LogMessages.TotalScrapedSuccessfully, nameof(VLVApiScraper), internalProducts.Count));
+        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(VLVApiScraper), internalProducts.Count);
         return internalProducts;
     }
 }

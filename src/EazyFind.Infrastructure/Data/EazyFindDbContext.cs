@@ -63,7 +63,7 @@ public class EazyFindDbContext(DbContextOptions<EazyFindDbContext> options) : Db
         {
             builder.Property(p => p.Name)
                 .IsRequired()
-                .HasMaxLength(128);
+                .HasMaxLength(256);
 
             builder.HasIndex(p => p.Name)
                 .HasMethod("GIN")
