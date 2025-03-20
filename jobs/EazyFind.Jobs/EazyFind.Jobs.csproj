@@ -21,5 +21,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\EazyFind.Infrastructure\EazyFind.Infrastructure.csproj" />
   </ItemGroup>
-
+  
+  <ItemGroup>
+    <None Update="appsettings.Local.json">
+      <DependentUpon>appsettings.json</DependentUpon>
+    </None>
+  </ItemGroup>
 </Project>
