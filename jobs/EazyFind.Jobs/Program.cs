@@ -4,6 +4,7 @@ using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Extensions;
 using EazyFind.Jobs.Jobs;
 using Hangfire;
+using Hangfire.Dashboard;
 using Hangfire.PostgreSql;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -83,7 +84,14 @@ app.Lifetime.ApplicationStarted.Register(() =>
     }
 });
 
-app.UseHangfireDashboard("/hangfire");
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = [new AllowAllDashboardAuthorizationFilter()]
+});
+
+
+app.MapGet("/", () => "EazyFind.Jobs API is running!");
+
 
 //if (app.Environment.IsDevelopment())
 //{
@@ -98,3 +106,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 await app.RunAsync();
+
+public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
+{
+    public bool Authorize(DashboardContext context) => true;
+}
