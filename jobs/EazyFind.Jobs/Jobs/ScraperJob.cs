@@ -51,6 +51,9 @@ public class ScraperJob
 
             var (newProducts, updatedProducts, productsToDelete) = ProcessProducts(products, existingProducts, storeCategoryEntity);
 
+            _logger.LogInformation("Processed Products for {StoreKey} {Category} {Scraper}: New: {NewProducts}, Updated: {UpdatedProducts}, Deleted: {DeletedProducts}",
+                storeCategoryConfig.Store, categoryType, scraper.GetType().Name, newProducts.Count, updatedProducts.Count, productsToDelete.Count);
+
             if (newProducts.Count > 0)
             {
                 try
