@@ -4,5 +4,13 @@ public enum CategoryType
 {
     Laptops,
     Smartphones,
-    Monitors
+    Monitors,
+    TVs,
+    Tablets,
+    Watches,
+    AllInOneComputers,
+    StationaryComputers,
+    Xbox,
+    NintendoSwitch,
+    PlayStation
 }
