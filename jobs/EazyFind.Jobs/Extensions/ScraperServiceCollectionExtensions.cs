@@ -1,7 +1,10 @@
 ﻿using EazyFind.Domain.Enums;
+using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Jobs;
 using EazyFind.Jobs.Scrapers;
 using EazyFind.Jobs.Scrapers.Interfaces;
+using Microsoft.Extensions.Options;
+using System.Net;
 
 namespace EazyFind.Jobs.Extensions;
 
@@ -25,12 +28,55 @@ public static class ScraperServiceCollectionExtensions
     {
         services.AddHttpClient(nameof(RedStoreScraper));
         services.AddHttpClient(nameof(ThreeDPlanetScraper));
-        services.AddHttpClient(nameof(YerevanMobileScraper));
-        services.AddHttpClient(nameof(ZigzagScraper));
         services.AddHttpClient(nameof(VegaScraper));
         services.AddHttpClient(nameof(VDComputersScraper));
         services.AddHttpClient(nameof(VLVApiScraper));
         services.AddHttpClient(nameof(MobileCentreScraper));
+
+        services.AddHttpClient(nameof(ZigzagScraper))
+            .ConfigurePrimaryHttpMessageHandler(sp =>
+            {
+                var apiKey = sp.GetRequiredService<IOptions<ScraperApiSettings>>().Value.ApiKey;
+                var session = sp.GetRequiredService<IScraperSessionManager>().GetSessionNumber(nameof(ZigzagScraper));
+
+                var proxyUsername = $"scraperapi.session_number={session}.render=true";
+                var proxyPassword = apiKey;
+                var proxyHost = "proxy-server.scraperapi.com";
+                var proxyPort = 8001;
+
+                return new HttpClientHandler
+                {
+                    Proxy = new WebProxy
+                    {
+                        Address = new Uri($"http://{proxyHost}:{proxyPort}"),
+                        Credentials = new NetworkCredential(proxyUsername, proxyPassword)
+                    },
+                    UseProxy = true,
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                };
+            });
+        services.AddHttpClient(nameof(YerevanMobileScraper))
+            .ConfigurePrimaryHttpMessageHandler(sp =>
+            {
+                var apiKey = sp.GetRequiredService<IOptions<ScraperApiSettings>>().Value.ApiKey;
+                var session = sp.GetRequiredService<IScraperSessionManager>().GetSessionNumber(nameof(ZigzagScraper));
+
+                var proxyUsername = $"scraperapi.session_number={session}.render=true";
+                var proxyPassword = apiKey;
+                var proxyHost = "proxy-server.scraperapi.com";
+                var proxyPort = 8001;
+
+                return new HttpClientHandler
+                {
+                    Proxy = new WebProxy
+                    {
+                        Address = new Uri($"http://{proxyHost}:{proxyPort}"),
+                        Credentials = new NetworkCredential(proxyUsername, proxyPassword)
+                    },
+                    UseProxy = true,
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                };
+            });
 
         return services;
     }
@@ -38,6 +84,7 @@ public static class ScraperServiceCollectionExtensions
     public static IServiceCollection AddJobs(this IServiceCollection services)
     {
         services.AddScoped<ScraperJob>();
+        services.AddScoped<IScraperSessionManager, ScraperSessionManager>();
 
         return services;
     }

@@ -45,6 +45,9 @@ public class ScraperJob
             _logger.LogInformation("Running scraper for {StoreKey} - {Category} ...", storeCategoryConfig.Store, categoryType);
 
             var products = await scraper.ScrapeAsync(storeCategoryConfig.Url, token);
+            if (products.Count is 0)
+                return;
+
             var existingProducts = await productService.GetByStoreAndCategoryAsync(storeCategoryConfig.Store, categoryType, token);
 
             var storeCategoryEntity = await storeCategoryService.GetByStoreAndCategoryAsync(storeCategoryConfig.Store, categoryType, token);

@@ -37,7 +37,7 @@ public class ZigzagScraper : IScraper
         {
             try
             {
-                var htmlString = await httpClient.GetStringAsync($"{pageUrl}?{paginationPart}{pageNumber}");
+                var htmlString = await httpClient.GetStringAsync($"{pageUrl}?{paginationPart}{pageNumber}", cancellationToken);
 
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlString);

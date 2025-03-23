@@ -44,6 +44,7 @@ builder.Host.UseSerilog((context, configuration) =>
 services.Configure<CategoryConfigs>(configuration.GetSection(nameof(CategoryConfigs)));
 services.Configure<ScraperConfigs>(configuration.GetSection(nameof(ScraperConfigs)));
 services.Configure<JobConfigs>(configuration.GetSection(nameof(JobConfigs)));
+services.Configure<ScraperApiSettings>(configuration.GetSection(nameof(ScraperApiSettings)));
 
 services.AddCoreServices()
         .AddInfrastructureServices(configuration)
