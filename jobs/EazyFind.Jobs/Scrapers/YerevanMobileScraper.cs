@@ -1,6 +1,8 @@
 ﻿using EazyFind.Domain.Entities;
+using EazyFind.Domain.Enums;
 using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Constants;
+using EazyFind.Jobs.ScraperAPI;
 using EazyFind.Jobs.Scrapers.Interfaces;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
@@ -10,24 +12,22 @@ namespace EazyFind.Jobs.Scrapers;
 
 public class YerevanMobileScraper : IScraper
 {
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ScraperApiAsyncClient _scraperApiClient;
     private readonly ILogger<YerevanMobileScraper> _logger;
     private readonly ScraperConfigs _jobConfigs;
 
     public YerevanMobileScraper(
-        IHttpClientFactory httpClientFactory,
+        ScraperApiAsyncClient scraperApiClient,
         ILogger<YerevanMobileScraper> logger,
         IOptions<ScraperConfigs> options)
     {
-        _httpClientFactory = httpClientFactory;
+        _scraperApiClient = scraperApiClient;
         _logger = logger;
         _jobConfigs = options.Value;
     }
 
     public async Task<List<Product>> ScrapeAsync(string pageUrl, CancellationToken cancellationToken)
     {
-        var httpClient = _httpClientFactory.CreateClient(nameof(YerevanMobileScraper));
-
         var paginationPart = "p=";
         var pageNumber = 1;
 
@@ -37,7 +37,7 @@ public class YerevanMobileScraper : IScraper
         {
             try
             {
-                var htmlString = await httpClient.GetStringAsync($"{pageUrl}?{paginationPart}{pageNumber}", cancellationToken);
+                var htmlString = await _scraperApiClient.ScrapeAsync(StoreKey.YerevanMobile, $"{pageUrl}?{paginationPart}{pageNumber}", ".grid_list", cancellationToken);
 
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlString);

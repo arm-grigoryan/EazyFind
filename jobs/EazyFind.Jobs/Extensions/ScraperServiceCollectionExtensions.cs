@@ -1,10 +1,8 @@
 ﻿using EazyFind.Domain.Enums;
-using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Jobs;
+using EazyFind.Jobs.ScraperAPI;
 using EazyFind.Jobs.Scrapers;
 using EazyFind.Jobs.Scrapers.Interfaces;
-using Microsoft.Extensions.Options;
-using System.Net;
 
 namespace EazyFind.Jobs.Extensions;
 
@@ -33,50 +31,13 @@ public static class ScraperServiceCollectionExtensions
         services.AddHttpClient(nameof(VLVApiScraper));
         services.AddHttpClient(nameof(MobileCentreScraper));
 
-        services.AddHttpClient(nameof(ZigzagScraper))
-            .ConfigurePrimaryHttpMessageHandler(sp =>
-            {
-                var apiKey = sp.GetRequiredService<IOptions<ScraperApiSettings>>().Value.ApiKey;
-                var session = sp.GetRequiredService<IScraperSessionManager>().GetSessionNumber(nameof(ZigzagScraper));
+        return services;
+    }
 
-                var proxyUsername = $"scraperapi.session_number={session}.render=true";
-                var proxyPassword = apiKey;
-                var proxyHost = "proxy-server.scraperapi.com";
-                var proxyPort = 8001;
-
-                return new HttpClientHandler
-                {
-                    Proxy = new WebProxy
-                    {
-                        Address = new Uri($"http://{proxyHost}:{proxyPort}"),
-                        Credentials = new NetworkCredential(proxyUsername, proxyPassword)
-                    },
-                    UseProxy = true,
-                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                };
-            });
-        services.AddHttpClient(nameof(YerevanMobileScraper))
-            .ConfigurePrimaryHttpMessageHandler(sp =>
-            {
-                var apiKey = sp.GetRequiredService<IOptions<ScraperApiSettings>>().Value.ApiKey;
-                var session = sp.GetRequiredService<IScraperSessionManager>().GetSessionNumber(nameof(ZigzagScraper));
-
-                var proxyUsername = $"scraperapi.session_number={session}.render=true";
-                var proxyPassword = apiKey;
-                var proxyHost = "proxy-server.scraperapi.com";
-                var proxyPort = 8001;
-
-                return new HttpClientHandler
-                {
-                    Proxy = new WebProxy
-                    {
-                        Address = new Uri($"http://{proxyHost}:{proxyPort}"),
-                        Credentials = new NetworkCredential(proxyUsername, proxyPassword)
-                    },
-                    UseProxy = true,
-                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                };
-            });
+    public static IServiceCollection AddScraperApi(this IServiceCollection services)
+    {
+        services.AddHttpClient<ScraperApiAsyncClient>();
+        services.AddScoped<ScraperSessionManager>();
 
         return services;
     }
@@ -84,7 +45,6 @@ public static class ScraperServiceCollectionExtensions
     public static IServiceCollection AddJobs(this IServiceCollection services)
     {
         services.AddScoped<ScraperJob>();
-        services.AddScoped<IScraperSessionManager, ScraperSessionManager>();
 
         return services;
     }

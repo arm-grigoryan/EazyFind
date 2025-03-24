@@ -50,6 +50,7 @@ services.AddCoreServices()
         .AddInfrastructureServices(configuration)
         .AddHttpClients()
         .AddScrapers()
+        .AddScraperApi()
         .AddJobs();
 
 services.AddHangfire(config =>
