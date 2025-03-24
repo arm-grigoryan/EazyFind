@@ -89,7 +89,7 @@ public class ScraperJob
         {
             if (existingProducts.TryGetValue(scrapedProduct.Url, out var existingProduct))
             {
-                if (existingProduct.StoreCategoryId != storeCategoryId)
+                if (existingProduct.StoreCategoryId != storeCategoryId) // in case of fetching products by store not by store and category pair
                 {
                     _logger.LogInformation(
                         "Duplicate product detected! Store: {Store}, Existing category: {ExistingCategory}, Fetched from category: {NewCategory}, Product: {Url}",
