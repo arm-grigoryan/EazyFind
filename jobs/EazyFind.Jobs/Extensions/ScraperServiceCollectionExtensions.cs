@@ -1,5 +1,4 @@
 ﻿using EazyFind.Domain.Enums;
-using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Jobs;
 using EazyFind.Jobs.ScraperAPI;
 using EazyFind.Jobs.Scrapers;
