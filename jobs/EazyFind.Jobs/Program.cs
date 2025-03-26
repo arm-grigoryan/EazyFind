@@ -4,7 +4,7 @@ using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Extensions;
 using EazyFind.Jobs.Jobs;
 using Hangfire;
-using Hangfire.Dashboard;
+using Hangfire.Dashboard.BasicAuthorization;
 using Hangfire.PostgreSql;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -45,11 +45,13 @@ services.Configure<CategoryConfigs>(configuration.GetSection(nameof(CategoryConf
 services.Configure<ScraperConfigs>(configuration.GetSection(nameof(ScraperConfigs)));
 services.Configure<JobConfigs>(configuration.GetSection(nameof(JobConfigs)));
 services.Configure<ScraperApiSettings>(configuration.GetSection(nameof(ScraperApiSettings)));
+services.Configure<BrightDataSettings>(configuration.GetSection(nameof(BrightDataSettings)));
 
 services.AddCoreServices()
         .AddInfrastructureServices(configuration)
         .AddHttpClients()
         .AddScrapers()
+        //.AddScraperApi()
         .AddJobs();
 
 services.AddHangfire(config =>
@@ -67,27 +69,46 @@ services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.Lifetime.ApplicationStarted.Register(() =>
+if (app.Environment.IsDevelopment())
 {
-    using var scope = app.Services.CreateScope();
-    var jobService = scope.ServiceProvider.GetRequiredService<ScraperJob>();
-    var recurringJobs = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
-    var options = scope.ServiceProvider.GetRequiredService<IOptions<JobConfigs>>();
-
-    foreach (var categorySchedule in options.Value.CategorySchedules)
+    app.Lifetime.ApplicationStarted.Register(() =>
     {
-        recurringJobs.AddOrUpdate(
-            $"{categorySchedule.Key}-Job",
-            () => jobService.RunScrapersAsync(categorySchedule.Key),
-            categorySchedule.Value,
-            new RecurringJobOptions()
-        );
-    }
-});
+        using var scope = app.Services.CreateScope();
+        var jobService = scope.ServiceProvider.GetRequiredService<ScraperJob>();
+        var recurringJobs = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<JobConfigs>>();
+
+        foreach (var categorySchedule in options.Value.CategorySchedules)
+        {
+            recurringJobs.AddOrUpdate(
+                $"{categorySchedule.Key}-Job",
+                () => jobService.RunScrapersAsync(categorySchedule.Key),
+                categorySchedule.Value,
+                new RecurringJobOptions()
+            );
+        }
+    });
+}
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = [new AllowAllDashboardAuthorizationFilter()]
+    Authorization =
+    [
+        new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
+        {
+            SslRedirect = false,
+            RequireSsl = false,
+            LoginCaseSensitive = true,
+            Users =
+            [
+                new BasicAuthAuthorizationUser
+                {
+                    Login = "owner",
+                    PasswordClear = "$SeCuRe_Pass123%*%"
+                }
+            ]
+        })
+    ]
 });
 
 
@@ -107,8 +128,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 await app.RunAsync();
-
-public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
-{
-    public bool Authorize(DashboardContext context) => true;
-}

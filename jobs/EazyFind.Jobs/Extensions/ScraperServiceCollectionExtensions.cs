@@ -1,10 +1,12 @@
 ﻿using EazyFind.Domain.Enums;
 using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Jobs;
+using EazyFind.Jobs.ScraperAPI;
 using EazyFind.Jobs.Scrapers;
 using EazyFind.Jobs.Scrapers.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 
 namespace EazyFind.Jobs.Extensions;
 
@@ -36,47 +38,65 @@ public static class ScraperServiceCollectionExtensions
         services.AddHttpClient(nameof(ZigzagScraper))
             .ConfigurePrimaryHttpMessageHandler(sp =>
             {
-                var apiKey = sp.GetRequiredService<IOptions<ScraperApiSettings>>().Value.ApiKey;
-                var session = sp.GetRequiredService<IScraperSessionManager>().GetSessionNumber(nameof(ZigzagScraper));
+                var brightDataSettings = sp.GetRequiredService<IOptions<BrightDataSettings>>().Value;
 
-                var proxyUsername = $"scraperapi.session_number={session}.render=true";
-                var proxyPassword = apiKey;
-                var proxyHost = "proxy-server.scraperapi.com";
-                var proxyPort = 8001;
+                byte[] certBytes = Convert.FromBase64String(brightDataSettings.CertBase64);
+                var cert = new X509Certificate2(certBytes);
 
-                return new HttpClientHandler
+                var proxyHost = brightDataSettings.Host;
+                var proxyPort = brightDataSettings.Port;
+                var proxyUsername = brightDataSettings.Username;
+                var proxyPassword = brightDataSettings.Password;
+
+                var handler = new HttpClientHandler
                 {
-                    Proxy = new WebProxy
+                    Proxy = new WebProxy($"http://{proxyHost}:{proxyPort}")
                     {
-                        Address = new Uri($"http://{proxyHost}:{proxyPort}"),
                         Credentials = new NetworkCredential(proxyUsername, proxyPassword)
                     },
                     UseProxy = true,
-                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    ServerCertificateCustomValidationCallback = (message, certChain, sslPolicyErrors, sslPolicyErrors2) => true
                 };
+
+                handler.ClientCertificates.Add(cert);
+
+                return handler;
             });
         services.AddHttpClient(nameof(YerevanMobileScraper))
             .ConfigurePrimaryHttpMessageHandler(sp =>
             {
-                var apiKey = sp.GetRequiredService<IOptions<ScraperApiSettings>>().Value.ApiKey;
-                var session = sp.GetRequiredService<IScraperSessionManager>().GetSessionNumber(nameof(ZigzagScraper));
+                var brightDataSettings = sp.GetRequiredService<IOptions<BrightDataSettings>>().Value;
 
-                var proxyUsername = $"scraperapi.session_number={session}.render=true";
-                var proxyPassword = apiKey;
-                var proxyHost = "proxy-server.scraperapi.com";
-                var proxyPort = 8001;
+                byte[] certBytes = Convert.FromBase64String(brightDataSettings.CertBase64);
+                var cert = new X509Certificate2(certBytes);
 
-                return new HttpClientHandler
+                var proxyHost = brightDataSettings.Host;
+                var proxyPort = brightDataSettings.Port;
+                var proxyUsername = brightDataSettings.Username;
+                var proxyPassword = brightDataSettings.Password;
+
+                var handler = new HttpClientHandler
                 {
-                    Proxy = new WebProxy
+                    Proxy = new WebProxy($"http://{proxyHost}:{proxyPort}")
                     {
-                        Address = new Uri($"http://{proxyHost}:{proxyPort}"),
                         Credentials = new NetworkCredential(proxyUsername, proxyPassword)
                     },
                     UseProxy = true,
-                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    ServerCertificateCustomValidationCallback = (message, certChain, sslPolicyErrors, sslPolicyErrors2) => true
                 };
+
+                handler.ClientCertificates.Add(cert);
+
+                return handler;
             });
+
+        return services;
+    }
+
+    public static IServiceCollection AddScraperApi(this IServiceCollection services)
+    {
+        services.AddHttpClient<ScraperApiAsyncClient>();
+        services.AddScoped<ScraperSessionManager>();
 
         return services;
     }
@@ -84,7 +104,6 @@ public static class ScraperServiceCollectionExtensions
     public static IServiceCollection AddJobs(this IServiceCollection services)
     {
         services.AddScoped<ScraperJob>();
-        services.AddScoped<IScraperSessionManager, ScraperSessionManager>();
 
         return services;
     }
