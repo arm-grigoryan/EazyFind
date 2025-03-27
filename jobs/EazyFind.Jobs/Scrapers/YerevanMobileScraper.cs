@@ -65,6 +65,7 @@ public class YerevanMobileScraper : IScraper
                         if (internalProducts.Exists(p => p.Url.Equals(productUrl, StringComparison.InvariantCultureIgnoreCase)))
                         {
                             _logger.LogInformation(LogMessages.FinishedScrapingPageItems, nameof(YerevanMobileScraper), pageNumber);
+                            _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(ZigzagScraper), internalProducts.Count);
                             return internalProducts;
                         }
 

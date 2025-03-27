@@ -46,6 +46,7 @@ services.Configure<ScraperConfigs>(configuration.GetSection(nameof(ScraperConfig
 services.Configure<JobConfigs>(configuration.GetSection(nameof(JobConfigs)));
 services.Configure<ScraperApiSettings>(configuration.GetSection(nameof(ScraperApiSettings)));
 services.Configure<BrightDataSettings>(configuration.GetSection(nameof(BrightDataSettings)));
+services.Configure<SmartProxySettings>(configuration.GetSection(nameof(SmartProxySettings)));
 
 services.AddCoreServices()
         .AddInfrastructureServices(configuration)
