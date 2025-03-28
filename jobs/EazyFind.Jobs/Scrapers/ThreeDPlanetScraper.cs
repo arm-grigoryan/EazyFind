@@ -63,7 +63,7 @@ public class ThreeDPlanetScraper : IScraper
 
                         var imageUrl = product.Descendants("img")
                                               .First()
-                                              .GetAttributeValue("data-lazy-src", string.Empty);
+                                              .GetAttributeValue("src", string.Empty);
 
                         var name = product.Descendants("h3")
                                           .First(x => x.HasClass("product-title"))
