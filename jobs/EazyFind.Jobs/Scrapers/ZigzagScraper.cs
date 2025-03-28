@@ -29,7 +29,7 @@ public class ZigzagScraper : IScraper
     {
         var httpClient = _httpClientFactory.CreateClient(nameof(ZigzagScraper));
 
-        var paginationPart = "p=";
+        var paginationPart = "p";
         var pageNumber = 1;
 
         List<Product> internalProducts = [];

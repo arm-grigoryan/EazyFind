@@ -29,7 +29,7 @@ public class YerevanMobileScraper : IScraper
     {
         var httpClient = _httpClientFactory.CreateClient(nameof(YerevanMobileScraper));
 
-        var paginationPart = "p=";
+        var paginationPart = "p";
         var pageNumber = 1;
 
         List<Product> internalProducts = [];
