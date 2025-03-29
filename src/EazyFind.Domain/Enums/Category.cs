@@ -12,5 +12,8 @@ public enum CategoryType
     StationaryComputers,
     Xbox,
     NintendoSwitch,
-    PlayStation
+    PlayStation,
+    Headsets,
+    Mice,
+    Keyboards
 }

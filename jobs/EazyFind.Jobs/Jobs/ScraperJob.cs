@@ -34,28 +34,46 @@ public class ScraperJob
             return;
         }
 
-        await Parallel.ForEachAsync(storeCategories, async (storeCategoryConfig, token) =>
+        var groupedStoreCategories = storeCategories
+            .GroupBy(sc => sc.Store);
+
+        await Parallel.ForEachAsync(groupedStoreCategories, async (groupedStoreCategoryConfig, token) =>
         {
             using var scope = _scopeFactory.CreateScope();
             var serviceProvider = scope.ServiceProvider;
             var productService = serviceProvider.GetRequiredService<IProductService>();
             var storeCategoryService = serviceProvider.GetRequiredService<IStoreCategoryService>();
-            var scraper = serviceProvider.GetKeyedService<IScraper>(storeCategoryConfig.Store);
+            var categoryInferrer = serviceProvider.GetRequiredService<ICategoryInferrer>();
+            var scraper = serviceProvider.GetKeyedService<IScraper>(groupedStoreCategoryConfig.Key);
 
-            _logger.LogInformation("Running scraper for {StoreKey} - {Category} ...", storeCategoryConfig.Store, categoryType);
+            _logger.LogInformation("Running scraper for {StoreKey} - {Category} ...", groupedStoreCategoryConfig.Key, categoryType);
 
-            var products = await scraper.ScrapeAsync(storeCategoryConfig.Url, token);
-            if (products.Count is 0)
+            var allProducts = new List<Product>();
+
+            foreach (var config in groupedStoreCategoryConfig)
+            {
+                var products = await scraper.ScrapeAsync(config.Url, token);
+
+                if (config.RequiresCategoryInference)
+                    products = [.. products.Where(p => categoryInferrer.InferCategoryFromName(p.Name) == categoryType)];
+
+                if (products.Count > 0)
+                    allProducts.AddRange(products);
+            }
+
+            allProducts = [.. allProducts.DistinctBy(p => p.Url)];
+
+            if (allProducts.Count is 0)
                 return;
 
-            var existingProducts = await productService.GetByStoreAndCategoryAsync(storeCategoryConfig.Store, categoryType, token);
+            var existingProducts = await productService.GetByStoreAndCategoryAsync(groupedStoreCategoryConfig.Key, categoryType, token);
 
-            var storeCategoryEntity = await storeCategoryService.GetByStoreAndCategoryAsync(storeCategoryConfig.Store, categoryType, token);
+            var storeCategoryEntity = await storeCategoryService.GetByStoreAndCategoryAsync(groupedStoreCategoryConfig.Key, categoryType, token);
 
-            var (newProducts, updatedProducts, productsToDelete) = ProcessProducts(products, existingProducts, storeCategoryEntity);
+            var (newProducts, updatedProducts, productsToDelete) = ProcessProducts(allProducts, existingProducts, storeCategoryEntity);
 
             _logger.LogInformation("Processed Products for {StoreKey} {Category} {Scraper}: New: {NewProducts}, Updated: {UpdatedProducts}, Deleted: {DeletedProducts}",
-                storeCategoryConfig.Store, categoryType, scraper.GetType().Name, newProducts.Count, updatedProducts.Count, productsToDelete.Count);
+                groupedStoreCategoryConfig.Key, categoryType, scraper.GetType().Name, newProducts.Count, updatedProducts.Count, productsToDelete.Count);
 
             if (newProducts.Count > 0)
             {
@@ -66,7 +84,7 @@ public class ScraperJob
                 catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == "23505")
                 {
                     _logger.LogWarning(pgEx, "Duplicate product detected! Store: {Store}, Category: {Category}",
-                        storeCategoryConfig.Store, categoryType);
+                        groupedStoreCategoryConfig.Key, categoryType);
                 }
             }
 

@@ -11,4 +11,5 @@ public class StoreCategoryConfig
 {
     public StoreKey Store { get; set; }
     public string Url { get; set; }
+    public bool RequiresCategoryInference { get; set; } = false;
 }

@@ -6,7 +6,6 @@ using EazyFind.Jobs.Scrapers;
 using EazyFind.Jobs.Scrapers.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Net;
-using System.Security.Cryptography.X509Certificates;
 
 namespace EazyFind.Jobs.Extensions;
 
@@ -104,6 +103,7 @@ public static class ScraperServiceCollectionExtensions
     public static IServiceCollection AddJobs(this IServiceCollection services)
     {
         services.AddScoped<ScraperJob>();
+        services.AddScoped<ICategoryInferrer, CategoryInferrer>();
 
         return services;
     }
