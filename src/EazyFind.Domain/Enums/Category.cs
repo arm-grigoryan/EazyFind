@@ -15,5 +15,11 @@ public enum CategoryType
     PlayStation,
     Headsets,
     Mice,
-    Keyboards
+    Keyboards,
+    AirConditioners,
+    Refrigerators,
+    BuiltInRefrigerators,
+    SideBySideRefrigerators,
+    WineRefrigerators,
+    RefrigeratorsAccessories
 }

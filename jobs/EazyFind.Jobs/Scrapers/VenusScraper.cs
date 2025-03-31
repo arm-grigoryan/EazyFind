@@ -1,6 +1,7 @@
 ﻿using EazyFind.Domain.Entities;
 using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Constants;
+using EazyFind.Jobs.Helpers;
 using EazyFind.Jobs.Scrapers.Interfaces;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
@@ -38,7 +39,8 @@ public class VenusScraper : IScraper
         {
             try
             {
-                var htmlString = await httpClient.GetStringAsync($"{pageUrl}?{paginationPart}{pageNumber}&{pageLimitPart}{pageLimit}");
+                var htmlString = await httpClient.GetStringAsync(UrlBuilderHelper.AddOrUpdateQueryParam(
+                    pageUrl, new Dictionary<string, string> { { paginationPart, pageNumber.ToString() }, { pageLimitPart, pageLimit.ToString() } }), cancellationToken);
 
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlString);
