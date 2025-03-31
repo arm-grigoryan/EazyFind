@@ -9,5 +9,7 @@ public enum StoreKey
     Vega,
     VdComputers,
     VLV,
-    MobileCentre
+    MobileCentre,
+    Venus,
+    AllCell
 }

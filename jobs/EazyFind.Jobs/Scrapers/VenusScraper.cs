@@ -1,7 +1,6 @@
 ﻿using EazyFind.Domain.Entities;
 using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Constants;
-using EazyFind.Jobs.Helpers;
 using EazyFind.Jobs.Scrapers.Interfaces;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
@@ -9,15 +8,15 @@ using System.Text.RegularExpressions;
 
 namespace EazyFind.Jobs.Scrapers;
 
-public class ZigzagScraper : IScraper
+public class VenusScraper : IScraper
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<ZigzagScraper> _logger;
+    private readonly ILogger<VenusScraper> _logger;
     private readonly ScraperConfigs _jobConfigs;
 
-    public ZigzagScraper(
+    public VenusScraper(
         IHttpClientFactory httpClientFactory,
-        ILogger<ZigzagScraper> logger,
+        ILogger<VenusScraper> logger,
         IOptions<ScraperConfigs> options)
     {
         _httpClientFactory = httpClientFactory;
@@ -27,28 +26,29 @@ public class ZigzagScraper : IScraper
 
     public async Task<List<Product>> ScrapeAsync(string pageUrl, CancellationToken cancellationToken)
     {
-        var httpClient = _httpClientFactory.CreateClient(nameof(ZigzagScraper));
+        var httpClient = _httpClientFactory.CreateClient(nameof(VenusScraper));
 
-        var paginationPart = "p";
+        var pageLimitPart = "limit=";
+        var pageLimit = 100;
+        var paginationPart = "page=";
         var pageNumber = 1;
-
         List<Product> internalProducts = [];
 
         while (true)
         {
             try
             {
-                var htmlString = await httpClient.GetStringAsync(UrlBuilderHelper.AddOrUpdateQueryParam(pageUrl, paginationPart, pageNumber.ToString()), cancellationToken);
+                var htmlString = await httpClient.GetStringAsync($"{pageUrl}?{paginationPart}{pageNumber}&{pageLimitPart}{pageLimit}");
 
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlString);
 
                 var products = htmlDoc.DocumentNode.Descendants("div")
-                                                   .Where(x => x.HasClass("product_block"));
+                                                   .Where(x => x.HasClass("product-block"));
 
                 if (products?.Any() is not true)
                 {
-                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(ZigzagScraper));
+                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(VenusScraper));
                     break;
                 }
 
@@ -58,27 +58,20 @@ public class ZigzagScraper : IScraper
                 {
                     try
                     {
-                        var itemATagElement = product.Descendants("a")
-                                                     .First(x => x.HasClass("product_name"));
-
-                        var productUrl = itemATagElement.GetAttributeValue("href", string.Empty);
-
-                        if (internalProducts.Exists(p => p.Url.Equals(productUrl, StringComparison.InvariantCultureIgnoreCase)))
-                        {
-                            _logger.LogInformation(LogMessages.FinishedScrapingPageItems, nameof(ZigzagScraper), pageNumber);
-                            _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(ZigzagScraper), internalProducts.Count);
-                            return internalProducts;
-                        }
+                        var productUrl = product.Descendants("a").First()
+                                                .GetAttributeValue("href", string.Empty);
 
                         var imageUrl = product.Descendants("img")
-                                              .First()
+                                              .First(x => x.HasClass("img-responsive"))
                                               .GetAttributeValue("src", string.Empty);
 
-                        var name = itemATagElement.InnerText.Trim();
+                        var name = product.Descendants("h4").First()
+                                          .Descendants("a").First()
+                                          .InnerText;
 
-                        var priceText = product.Descendants("span")
-                                               .FirstOrDefault(x => x.GetClasses().Any(x => x == "price"))
-                                               ?.InnerText
+                        var priceText = product.Descendants("p")
+                                               .First(x => x.HasClass("price"))
+                                               .InnerText
                                                .Trim();
 
                         var parsed = false;
@@ -103,18 +96,18 @@ public class ZigzagScraper : IScraper
                         index++;
                         errorCount = 0;
 
-                        //Console.WriteLine(internalProduct);
+                        Console.WriteLine(internalProduct);
                     }
                     catch (Exception ex)
                     {
                         errorCount++;
                         _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
-                                        nameof(ZigzagScraper), pageNumber, index, product.InnerHtml);
+                                        nameof(VenusScraper), pageNumber, index, product.InnerHtml);
 
                         if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                         {
                             throw new Exception(string.Format(LogMessages.MaxCountOfErrorsReached,
-                                                nameof(ZigzagScraper),
+                                                nameof(VenusScraper),
                                                 _jobConfigs.MaxErrorCountToContinue), ex);
                         }
                         continue;
@@ -125,12 +118,12 @@ public class ZigzagScraper : IScraper
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(ZigzagScraper));
+                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(VenusScraper));
                 break;
             }
         }
 
-        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(ZigzagScraper), internalProducts.Count);
+        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(VenusScraper), internalProducts.Count);
         return internalProducts;
     }
 }

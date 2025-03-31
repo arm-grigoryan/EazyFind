@@ -109,7 +109,7 @@ public class YerevanMobileScraper : IScraper
                     {
                         errorCount++;
                         _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
-                                        nameof(YerevanMobileScraper), 0, index, product.InnerHtml);
+                                        nameof(YerevanMobileScraper), pageNumber, index, product.InnerHtml);
 
                         if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                         {

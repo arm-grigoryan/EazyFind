@@ -21,6 +21,8 @@ public static class ScraperServiceCollectionExtensions
         services.AddKeyedScoped<IScraper, VDComputersScraper>(StoreKey.VdComputers);
         services.AddKeyedScoped<IScraper, VLVApiScraper>(StoreKey.VLV);
         services.AddKeyedScoped<IScraper, MobileCentreScraper>(StoreKey.MobileCentre);
+        services.AddKeyedScoped<IScraper, VenusScraper>(StoreKey.Venus);
+        services.AddKeyedScoped<IScraper, AllCellScraper>(StoreKey.AllCell);
 
         return services;
     }
@@ -33,6 +35,8 @@ public static class ScraperServiceCollectionExtensions
         services.AddHttpClient(nameof(VDComputersScraper));
         services.AddHttpClient(nameof(VLVApiScraper));
         services.AddHttpClient(nameof(MobileCentreScraper));
+        services.AddHttpClient(nameof(VenusScraper));
+        services.AddHttpClient(nameof(AllCellScraper));
 
         services.AddHttpClient(nameof(ZigzagScraper))
             .ConfigurePrimaryHttpMessageHandler(sp =>
