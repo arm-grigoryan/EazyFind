@@ -36,8 +36,30 @@ public static class ScraperServiceCollectionExtensions
         services.AddHttpClient(nameof(VLVApiScraper));
         services.AddHttpClient(nameof(MobileCentreScraper));
         services.AddHttpClient(nameof(VenusScraper));
-        services.AddHttpClient(nameof(AllCellScraper));
 
+
+        services.AddHttpClient(nameof(AllCellScraper))
+            .ConfigurePrimaryHttpMessageHandler(sp =>
+            {
+                var smartProxySettings = sp.GetRequiredService<IOptions<SmartProxySettings>>().Value;
+
+                var proxyHost = smartProxySettings.Host;
+                var proxyPort = smartProxySettings.Port;
+                var proxyUsername = smartProxySettings.Username;
+                var proxyPassword = smartProxySettings.Password;
+
+                var handler = new HttpClientHandler
+                {
+                    Proxy = new WebProxy($"http://{proxyHost}:{proxyPort}")
+                    {
+                        Credentials = new NetworkCredential(proxyUsername, proxyPassword)
+                    },
+                    UseProxy = true,
+                    ServerCertificateCustomValidationCallback = (message, certChain, sslPolicyErrors, sslPolicyErrors2) => true
+                };
+
+                return handler;
+            });
         services.AddHttpClient(nameof(ZigzagScraper))
             .ConfigurePrimaryHttpMessageHandler(sp =>
             {

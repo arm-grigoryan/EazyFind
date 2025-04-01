@@ -29,9 +29,9 @@ public class VenusScraper : IScraper
     {
         var httpClient = _httpClientFactory.CreateClient(nameof(VenusScraper));
 
-        var pageLimitPart = "limit=";
+        var pageLimitPart = "limit";
         var pageLimit = 100;
-        var paginationPart = "page=";
+        var paginationPart = "page";
         var pageNumber = 1;
         List<Product> internalProducts = [];
 
