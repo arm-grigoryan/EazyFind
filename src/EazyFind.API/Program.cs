@@ -1,5 +1,6 @@
 using EazyFind.Application;
 using EazyFind.Infrastructure;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -7,10 +8,13 @@ var configuration = builder.Configuration;
 
 // TODOME configure logging
 
-builder.Services.AddControllers();
+services.AddControllers()
+        .AddJsonOptions(opt => opt.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+services.AddEndpointsApiExplorer();
+services.AddSwaggerGen();
+
+services.AddAutoMapper(typeof(Program));
 
 services.AddCoreServices()
         .AddInfrastructureServices(configuration);
@@ -21,7 +25,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(opt => opt.EnableTryItOutByDefault());
 }
 
 app.UseHttpsRedirection();

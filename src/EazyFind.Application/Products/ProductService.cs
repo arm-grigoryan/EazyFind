@@ -1,4 +1,5 @@
-﻿using EazyFind.Domain.Entities;
+﻿using EazyFind.Domain.Common;
+using EazyFind.Domain.Entities;
 using EazyFind.Domain.Enums;
 using EazyFind.Domain.Interfaces.Repositories;
 
@@ -6,6 +7,11 @@ namespace EazyFind.Application.Products;
 
 internal class ProductService(IProductRepository repository) : IProductService
 {
+    public Task<PaginatedResult<Product>> GetPaginatedAsync(PaginationFilter paginationFilter, StoreKey? store, CategoryType? category, string searchText, CancellationToken cancellationToken)
+    {
+        return repository.GetPaginatedAsync(paginationFilter, store, category, searchText, cancellationToken);
+    }
+
     public Task<Dictionary<string, Product>> GetByStoreAsync(StoreKey store, CancellationToken cancellationToken)
     {
         return repository.GetByStoreAsync(store, cancellationToken);

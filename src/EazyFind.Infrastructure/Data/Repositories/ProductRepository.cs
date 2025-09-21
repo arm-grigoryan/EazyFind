@@ -1,12 +1,46 @@
-﻿using EazyFind.Domain.Entities;
+﻿using EazyFind.Domain.Common;
+using EazyFind.Domain.Entities;
 using EazyFind.Domain.Enums;
 using EazyFind.Domain.Interfaces.Repositories;
+using EazyFind.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace EazyFind.Infrastructure.Data.Repositories;
 
 internal class ProductRepository(EazyFindDbContext dbContext) : IProductRepository
 {
+    public async Task<PaginatedResult<Product>> GetPaginatedAsync(
+        PaginationFilter paginationFilter,
+        StoreKey? store,
+        CategoryType? category,
+        string searchText,
+        CancellationToken cancellationToken)
+    {
+        var query = dbContext.Products
+            .AsNoTracking()
+            .Include(p => p.StoreCategory)
+                .ThenInclude(sc => sc.Store)
+            .Include(p => p.StoreCategory)
+                .ThenInclude(sc => sc.Category)
+            .Where(p => !p.IsDeleted)
+            .WhereIf(store is not null, p => p.StoreCategory.StoreKey == store)
+            .WhereIf(category is not null, p => p.StoreCategory.CategoryType == category)
+            .WhereIf(!string.IsNullOrEmpty(searchText), p => EF.Functions.ILike(p.Name, $"%{searchText}%"));
+
+        if (!string.IsNullOrEmpty(searchText))
+        {
+            query = query.OrderByDescending(p => EF.Functions.TrigramsSimilarity(p.Name, searchText));
+        }
+        else
+        {
+            query = query
+            .OrderByDescending(p => p.LastSyncedAt)
+            .ThenBy(p => p.Name);
+        }
+
+        return await query.PageAsync(paginationFilter, cancellationToken);
+    }
+
     public Task<Dictionary<string, Product>> GetByStoreAsync(StoreKey store, CancellationToken cancellationToken)
     {
         return dbContext.Products.AsNoTracking()
