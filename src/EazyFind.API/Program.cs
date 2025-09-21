@@ -1,5 +1,7 @@
 using EazyFind.Application;
 using EazyFind.Infrastructure;
+using EazyFind.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +22,12 @@ services.AddCoreServices()
         .AddInfrastructureServices(configuration);
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<EazyFindDbContext>();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

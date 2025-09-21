@@ -1,11 +1,13 @@
 using EazyFind.Application;
 using EazyFind.Infrastructure;
+using EazyFind.Infrastructure.Data;
 using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Extensions;
 using EazyFind.Jobs.Jobs;
 using Hangfire;
 using Hangfire.Dashboard.BasicAuthorization;
 using Hangfire.PostgreSql;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Serilog;
 
@@ -69,6 +71,12 @@ services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<EazyFindDbContext>();
+    db.Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {

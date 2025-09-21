@@ -14,17 +14,21 @@ public class ProductsController(IProductService service, IMapper mapper) : Contr
 {
     /// <summary>
     /// Get products
+    /// <param name="paginationFilter">Pagination Filter</param>
+    /// <param name="stores">Selected stores</param>
+    /// <param name="categories">Selected categories</param>
+    /// <param name="searchText">Search characters</param>
     /// </summary>
     [ProducesResponseType(typeof(PaginatedResult<ProductDto>), StatusCodes.Status200OK)]
     [HttpGet]
     public async Task<ActionResult<PaginatedResult<ProductDto>>> GetPaginatedProducts(
         [FromQuery] PaginationFilter paginationFilter,
-        [FromQuery] StoreKey? store,
-        [FromQuery] CategoryType? category,
+        [FromQuery] List<StoreKey> stores,
+        [FromQuery] List<CategoryType> categories,
         [FromQuery, MinLength(3)] string searchText,
         CancellationToken cancellationToken = default)
     {
-        var products = await service.GetPaginatedAsync(paginationFilter, store, category, searchText, cancellationToken);
+        var products = await service.GetPaginatedAsync(paginationFilter, stores, categories, searchText, cancellationToken);
 
         var result = new PaginatedResult<ProductDto>
         {

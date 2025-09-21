@@ -11,8 +11,8 @@ internal class ProductRepository(EazyFindDbContext dbContext) : IProductReposito
 {
     public async Task<PaginatedResult<Product>> GetPaginatedAsync(
         PaginationFilter paginationFilter,
-        StoreKey? store,
-        CategoryType? category,
+        List<StoreKey> stores,
+        List<CategoryType> categories,
         string searchText,
         CancellationToken cancellationToken)
     {
@@ -23,19 +23,21 @@ internal class ProductRepository(EazyFindDbContext dbContext) : IProductReposito
             .Include(p => p.StoreCategory)
                 .ThenInclude(sc => sc.Category)
             .Where(p => !p.IsDeleted)
-            .WhereIf(store is not null, p => p.StoreCategory.StoreKey == store)
-            .WhereIf(category is not null, p => p.StoreCategory.CategoryType == category)
-            .WhereIf(!string.IsNullOrEmpty(searchText), p => EF.Functions.ILike(p.Name, $"%{searchText}%"));
+            .WhereIf(stores is { Count: > 0 }, p => stores.Contains(p.StoreCategory.StoreKey))
+            .WhereIf(categories is { Count: > 0 }, p => categories.Contains(p.StoreCategory.CategoryType));
 
         if (!string.IsNullOrEmpty(searchText))
         {
-            query = query.OrderByDescending(p => EF.Functions.TrigramsSimilarity(p.Name, searchText));
+            const double threshold = 0.3;
+            query = query
+                .Where(p => EF.Functions.TrigramsSimilarity(p.Name, searchText) > threshold)
+                .OrderByDescending(p => EF.Functions.TrigramsSimilarity(p.Name, searchText));
         }
         else
         {
             query = query
-            .OrderByDescending(p => p.LastSyncedAt)
-            .ThenBy(p => p.Name);
+                .OrderByDescending(p => p.LastSyncedAt)
+                .ThenBy(p => p.Name);
         }
 
         return await query.PageAsync(paginationFilter, cancellationToken);

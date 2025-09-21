@@ -6,7 +6,7 @@ namespace EazyFind.Domain.Interfaces.Repositories;
 
 public interface IProductRepository
 {
-    Task<PaginatedResult<Product>> GetPaginatedAsync(PaginationFilter paginationFilter, StoreKey? store, CategoryType? category, string searchText, CancellationToken cancellationToken);
+    Task<PaginatedResult<Product>> GetPaginatedAsync(PaginationFilter paginationFilter, List<StoreKey> stores, List<CategoryType> categories, string searchText, CancellationToken cancellationToken);
     Task<Dictionary<string, Product>> GetByStoreAsync(StoreKey store, CancellationToken cancellationToken);
     Task<Dictionary<string, Product>> GetByStoreAndCategoryAsync(StoreKey store, CategoryType category, CancellationToken cancellationToken);
     Task BulkAddProductsAsync(List<Product> products, CancellationToken cancellationToken);

@@ -7,9 +7,14 @@ namespace EazyFind.Application.Products;
 
 internal class ProductService(IProductRepository repository) : IProductService
 {
-    public Task<PaginatedResult<Product>> GetPaginatedAsync(PaginationFilter paginationFilter, StoreKey? store, CategoryType? category, string searchText, CancellationToken cancellationToken)
+    public Task<PaginatedResult<Product>> GetPaginatedAsync(
+        PaginationFilter paginationFilter,
+        List<StoreKey> stores,
+        List<CategoryType> categories,
+        string searchText,
+        CancellationToken cancellationToken)
     {
-        return repository.GetPaginatedAsync(paginationFilter, store, category, searchText, cancellationToken);
+        return repository.GetPaginatedAsync(paginationFilter, stores, categories, searchText, cancellationToken);
     }
 
     public Task<Dictionary<string, Product>> GetByStoreAsync(StoreKey store, CancellationToken cancellationToken)
