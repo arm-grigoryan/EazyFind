@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MudBlazor" Version="8.12.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\src\EazyFind.Infrastructure\EazyFind.Infrastructure.csproj" />
   </ItemGroup>
 
