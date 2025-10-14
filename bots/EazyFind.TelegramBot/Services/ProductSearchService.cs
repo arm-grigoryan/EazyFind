@@ -1,9 +1,6 @@
-using System.Collections.Generic;
-using System.Linq;
 using EazyFind.Application.Products;
 using EazyFind.Domain.Common;
 using EazyFind.Domain.Entities;
-using EazyFind.Domain.Enums;
 using EazyFind.TelegramBot.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -21,7 +18,7 @@ public class ProductSearchService
         _logger = logger;
     }
 
-    public async Task<PaginatedResult<Product>?> SearchAsync(ProductSearchRequest request, CancellationToken cancellationToken)
+    public async Task<PaginatedResult<Product>> SearchAsync(ProductSearchRequest request, CancellationToken cancellationToken)
     {
         try
         {
@@ -29,8 +26,8 @@ public class ProductSearchService
             var productService = scope.ServiceProvider.GetRequiredService<IProductService>();
 
             var pagination = new PaginationFilter(request.Skip, request.Take);
-            var stores = request.Stores?.ToList() ?? new List<StoreKey>();
-            var categories = request.Categories?.ToList() ?? new List<CategoryType>();
+            var stores = request.Stores?.ToList() ?? [];
+            var categories = request.Categories?.ToList() ?? [];
             var searchText = request.SearchText?.Trim() ?? string.Empty;
 
             _logger.LogInformation(

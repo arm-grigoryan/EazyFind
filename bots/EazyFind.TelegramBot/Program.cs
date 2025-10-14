@@ -18,16 +18,8 @@ builder.Configuration
 
 builder.Services.Configure<TelegramBotOptions>(builder.Configuration.GetSection(TelegramBotOptions.SectionName));
 
-builder.Services.AddCoreServices();
-
-var connectionString = builder.Configuration.GetConnectionString("EazyFindDatabase");
-if (string.IsNullOrWhiteSpace(connectionString) ||
-    connectionString.Contains("YOUR_", StringComparison.OrdinalIgnoreCase))
-{
-    throw new InvalidOperationException("Connection string 'EazyFindDatabase' is not configured. Please update appsettings.json.");
-}
-
-builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddCoreServices()
+                .AddInfrastructureServices(builder.Configuration);
 
 builder.Services.AddLogging(logging =>
 {
@@ -43,12 +35,6 @@ builder.Services.AddSingleton<ProductSearchService>();
 builder.Services.AddSingleton<ITelegramBotClient>(sp =>
 {
     var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<TelegramBotOptions>>().Value;
-
-    if (string.IsNullOrWhiteSpace(options.BotToken) || options.BotToken == TelegramBotOptions.PlaceholderToken)
-    {
-        throw new InvalidOperationException("Telegram bot token is not configured. Please update appsettings.json.");
-    }
-
     return new TelegramBotClient(options.BotToken);
 });
 

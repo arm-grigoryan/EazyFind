@@ -2,7 +2,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
-using Telegram.Bot.Types.Enums;
 
 namespace EazyFind.TelegramBot.Services;
 
@@ -26,7 +25,7 @@ public class BotHostedService : BackgroundService
 
         var receiverOptions = new ReceiverOptions
         {
-            AllowedUpdates = Array.Empty<UpdateType>()
+            AllowedUpdates = []
         };
 
         _botClient.StartReceiving(_updateHandler, receiverOptions, cancellationToken: stoppingToken);

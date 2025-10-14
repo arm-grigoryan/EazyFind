@@ -1,18 +1,15 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
 using EazyFind.Domain.Entities;
 using EazyFind.Domain.Enums;
 using EazyFind.TelegramBot.Extensions;
 using EazyFind.TelegramBot.Models;
 using Microsoft.Extensions.Logging;
+using System.Net;
+using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace EazyFind.TelegramBot.Services;
@@ -138,11 +135,19 @@ public class UpdateHandler : IUpdateHandler
         }
     }
 
-    private async Task HandleSearchTextAsync(ITelegramBotClient botClient, long chatId, UserSession session, string text, CancellationToken cancellationToken)
+    private static async Task HandleSearchTextAsync(ITelegramBotClient botClient, long chatId, UserSession session, string text, CancellationToken cancellationToken)
     {
+        session.SelectedStores.Clear();
+        session.SelectedCategories.Clear();
+
         if (string.Equals(text, "skip", StringComparison.OrdinalIgnoreCase))
         {
             session.SearchText = null;
+            session.Stage = ConversationStage.SelectingCategories;
+
+            await botClient.SendTextMessageAsync(chatId, "Select product categories (choose at least one).", replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
+            var prompt = await botClient.SendTextMessageAsync(chatId, "Use the buttons below to toggle categories. Press 'All categories' or 'Done' when finished.", replyMarkup: BuildCategoryKeyboard(session), cancellationToken: cancellationToken);
+            session.CategorySelectionMessageId = prompt.MessageId;
         }
         else if (text.Length < 3)
         {
@@ -152,29 +157,26 @@ public class UpdateHandler : IUpdateHandler
         else
         {
             session.SearchText = text;
+            session.Stage = ConversationStage.SelectingStores;
+
+            await botClient.SendTextMessageAsync(chatId, "Select the stores to search in (choose at least one).", replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
+            var prompt = await botClient.SendTextMessageAsync(chatId, "Use the buttons below to toggle stores. Press 'All stores' or 'Done' when finished.", replyMarkup: BuildStoreKeyboard(session), cancellationToken: cancellationToken);
+            session.StoreSelectionMessageId = prompt.MessageId;
         }
-
-        session.Stage = ConversationStage.SelectingStores;
-        session.SelectedStores.Clear();
-        session.SelectedCategories.Clear();
-
-        await botClient.SendTextMessageAsync(chatId, "Select the stores to search in (choose at least one).", replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
-        var prompt = await botClient.SendTextMessageAsync(chatId, "Use the buttons below to toggle stores. Press 'All stores' or 'Done' when finished.", replyMarkup: BuildStoreKeyboard(session), cancellationToken: cancellationToken);
-        session.StoreSelectionMessageId = prompt.MessageId;
     }
 
-    private async Task HandleStoreSelectionAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery, UserSession session, CancellationToken cancellationToken)
+    private static async Task HandleStoreSelectionAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery, UserSession session, CancellationToken cancellationToken)
     {
         var action = callbackQuery.Data!["store:".Length..];
         if (action.Equals("done", StringComparison.OrdinalIgnoreCase))
         {
             if (!session.HasSelectedStores)
             {
-            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Select at least one store.", showAlert: true, cancellationToken: cancellationToken);
-            return;
-        }
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Select at least one store.", showAlert: true, cancellationToken: cancellationToken);
+                return;
+            }
 
-            session.Stage = ConversationStage.SelectingCategories;
+            session.Stage = ConversationStage.AwaitingLimit;
             if (session.StoreSelectionMessageId.HasValue)
             {
                 await botClient.EditMessageReplyMarkupAsync(callbackQuery.Message!.Chat.Id, session.StoreSelectionMessageId.Value, replyMarkup: null, cancellationToken: cancellationToken);
@@ -183,8 +185,16 @@ public class UpdateHandler : IUpdateHandler
             var selectedStores = string.Join(", ", session.SelectedStores.Select(s => s.ToDisplayName()));
             await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, $"Stores selected: {selectedStores}", cancellationToken: cancellationToken);
 
-            var prompt = await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "Select product categories (choose at least one).", replyMarkup: BuildCategoryKeyboard(session), cancellationToken: cancellationToken);
-            session.CategorySelectionMessageId = prompt.MessageId;
+            var limitKeyboard = new ReplyKeyboardMarkup(new[]
+            {
+                new KeyboardButton[] { "5", "10", "20" }
+            })
+            {
+                ResizeKeyboard = true,
+                OneTimeKeyboard = true
+            };
+
+            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "How many items should be shown? (1-25)", replyMarkup: limitKeyboard, cancellationToken: cancellationToken);
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
             return;
         }
@@ -217,18 +227,18 @@ public class UpdateHandler : IUpdateHandler
         await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
     }
 
-    private async Task HandleCategorySelectionAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery, UserSession session, CancellationToken cancellationToken)
+    private static async Task HandleCategorySelectionAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery, UserSession session, CancellationToken cancellationToken)
     {
         var action = callbackQuery.Data!["category:".Length..];
         if (action.Equals("done", StringComparison.OrdinalIgnoreCase))
         {
             if (!session.HasSelectedCategories)
             {
-            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Select at least one category.", showAlert: true, cancellationToken: cancellationToken);
-            return;
-        }
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Select at least one category.", showAlert: true, cancellationToken: cancellationToken);
+                return;
+            }
 
-            session.Stage = ConversationStage.AwaitingLimit;
+            session.Stage = ConversationStage.SelectingStores;
             if (session.CategorySelectionMessageId.HasValue)
             {
                 await botClient.EditMessageReplyMarkupAsync(callbackQuery.Message!.Chat.Id, session.CategorySelectionMessageId.Value, replyMarkup: null, cancellationToken: cancellationToken);
@@ -237,16 +247,10 @@ public class UpdateHandler : IUpdateHandler
             var selectedCategories = string.Join(", ", session.SelectedCategories.Select(c => c.ToDisplayName()));
             await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, $"Categories selected: {selectedCategories}", cancellationToken: cancellationToken);
 
-            var limitKeyboard = new ReplyKeyboardMarkup(new[]
-            {
-                new KeyboardButton[] { "5", "10", "20" }
-            })
-            {
-                ResizeKeyboard = true,
-                OneTimeKeyboard = true
-            };
+            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "Now, select the stores to search in (choose at least one).", cancellationToken: cancellationToken);
+            var prompt = await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "Use the buttons below to toggle stores. Press 'All stores' or 'Done' when finished.", replyMarkup: BuildStoreKeyboard(session), cancellationToken: cancellationToken);
+            session.StoreSelectionMessageId = prompt.MessageId;
 
-            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "How many items should be shown? (1-100)", replyMarkup: limitKeyboard, cancellationToken: cancellationToken);
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
             return;
         }
@@ -281,9 +285,9 @@ public class UpdateHandler : IUpdateHandler
 
     private async Task HandleLimitAsync(ITelegramBotClient botClient, long chatId, UserSession session, string text, CancellationToken cancellationToken)
     {
-        if (!int.TryParse(text, out var take) || take < 1 || take > 100)
+        if (!int.TryParse(text, out var take) || take < 1 || take > 25)
         {
-            await botClient.SendTextMessageAsync(chatId, "Please enter a number between 1 and 100.", cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(chatId, "Please enter a number between 1 and 25.", cancellationToken: cancellationToken);
             return;
         }
 
@@ -297,11 +301,15 @@ public class UpdateHandler : IUpdateHandler
         }
 
         summaryBuilder.AppendLine($"Stores: {string.Join(", ", session.SelectedStores.Select(s => s.ToDisplayName()))}");
-        summaryBuilder.AppendLine($"Categories: {string.Join(", ", session.SelectedCategories.Select(c => c.ToDisplayName()))}");
+
+        if (session.HasSelectedCategories)
+        {
+            summaryBuilder.AppendLine($"Categories: {string.Join(", ", session.SelectedCategories.Select(c => c.ToDisplayName()))}");
+        }
 
         await botClient.SendTextMessageAsync(chatId, summaryBuilder.ToString(), replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
 
-        await botClient.SendChatActionAsync(chatId, ChatAction.Typing, cancellationToken);
+        await botClient.SendChatActionAsync(chatId, ChatAction.Typing, null, cancellationToken);
 
         var request = new ProductSearchRequest
         {
@@ -445,7 +453,7 @@ public class UpdateHandler : IUpdateHandler
         return new InlineKeyboardMarkup(rows);
     }
 
-    private static string Escape(string? value) => string.IsNullOrEmpty(value) ? string.Empty : WebUtility.HtmlEncode(value);
+    private static string Escape(string value) => string.IsNullOrEmpty(value) ? string.Empty : WebUtility.HtmlEncode(value);
 
     private static async Task SendWelcomeAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
     {
