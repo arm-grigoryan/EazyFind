@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace EazyFind.TelegramBot.Extensions;
+namespace EazyFind.Domain.Extensions;
 
 public static partial class EnumExtensions
 {

@@ -1,8 +1,13 @@
 using EazyFind.Application;
+using EazyFind.Application.Alerts;
+using EazyFind.Application.Messaging;
+using EazyFind.API.Services;
 using EazyFind.Infrastructure;
 using EazyFind.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using Telegram.Bot;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -20,6 +25,18 @@ services.AddAutoMapper(typeof(Program));
 
 services.AddCoreServices()
         .AddInfrastructureServices(configuration);
+
+services.Configure<AlertOptions>(configuration.GetSection(AlertOptions.SectionName));
+services.Configure<TelegramBotOptions>(configuration.GetSection(TelegramBotOptions.SectionName));
+
+services.AddSingleton<ITelegramBotClient>(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<TelegramBotOptions>>().Value;
+    return new TelegramBotClient(options.BotToken);
+});
+
+services.AddSingleton<IAlertNotificationPublisher, TelegramAlertNotificationPublisher>();
+services.AddHostedService<AlertEvaluatorService>();
 
 var app = builder.Build();
 
