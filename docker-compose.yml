@@ -48,6 +48,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ConnectionStrings__EazyFindDatabase=${EAZYFIND_DB_CONN}
+      - TelegramBot__BotToken=${EAZYFIND_BOT_TOKEN}
     ports:
       - "${EAZYFIND_API_PORT}:8080"
     networks:
@@ -81,6 +82,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ConnectionStrings__EazyFindDatabase=${EAZYFIND_DB_CONN}
+      - TelegramBot__BotToken=${EAZYFIND_BOT_TOKEN}
     networks:
       - eazyfind-net
 
