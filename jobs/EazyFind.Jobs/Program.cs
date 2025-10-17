@@ -68,7 +68,6 @@ builder.Services.AddHangfireServer(options => options.WorkerCount = 3);
 
 services.AddControllers();
 services.AddEndpointsApiExplorer();
-services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -122,13 +121,6 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 
 
 app.MapGet("/", () => "EazyFind.Jobs API is running!");
-
-
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
 
 app.UseHttpsRedirection();
 

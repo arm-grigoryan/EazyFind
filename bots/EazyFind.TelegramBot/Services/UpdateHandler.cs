@@ -1,4 +1,4 @@
-using EazyFind.Application.Products;
+﻿using EazyFind.Application.Products;
 using EazyFind.Domain.Entities;
 using EazyFind.Domain.Enums;
 using EazyFind.Domain.Extensions;
@@ -9,7 +9,6 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -404,5 +403,53 @@ public class UpdateHandler : IUpdateHandler
         message.AppendLine("Enter keywords to search for products or tap Skip to search by filters only.");
 
         await botClient.SendTextMessageAsync(chatId, message.ToString(), replyMarkup: skipKeyboard, cancellationToken: cancellationToken);
+    }
+
+    private static InlineKeyboardMarkup BuildStoreKeyboard(UserSession session)
+    {
+        var rows = new List<InlineKeyboardButton[]>();
+        var stores = Enum.GetValues<StoreKey>();
+
+        foreach (var chunk in stores.Chunk(2))
+        {
+            rows.Add(chunk.Select(store =>
+            {
+                var label = session.SelectedStores.Contains(store) ? $"✅ {store.ToDisplayName()}" : store.ToDisplayName();
+                return InlineKeyboardButton.WithCallbackData(label, $"store:{store}");
+            }).ToArray());
+        }
+
+        rows.Add(new[]
+        {
+            InlineKeyboardButton.WithCallbackData(session.SelectedStores.Count == stores.Length ? "✅ All stores" : "All stores", "store:all"),
+            InlineKeyboardButton.WithCallbackData("Clear", "store:clear"),
+            InlineKeyboardButton.WithCallbackData("Done", "store:done")
+        });
+
+        return new InlineKeyboardMarkup(rows);
+    }
+
+    private static InlineKeyboardMarkup BuildCategoryKeyboard(UserSession session)
+    {
+        var rows = new List<InlineKeyboardButton[]>();
+        var categories = Enum.GetValues<CategoryType>();
+
+        foreach (var chunk in categories.Chunk(3))
+        {
+            rows.Add(chunk.Select(category =>
+            {
+                var label = session.SelectedCategories.Contains(category) ? $"✅ {category.ToDisplayName()}" : category.ToDisplayName();
+                return InlineKeyboardButton.WithCallbackData(label, $"category:{category}");
+            }).ToArray());
+        }
+
+        rows.Add(new[]
+        {
+            InlineKeyboardButton.WithCallbackData(session.SelectedCategories.Count == categories.Length ? "✅ All categories" : "All categories", "category:all"),
+            InlineKeyboardButton.WithCallbackData("Clear", "category:clear"),
+            InlineKeyboardButton.WithCallbackData("Done", "category:done")
+        });
+
+        return new InlineKeyboardMarkup(rows);
     }
 }

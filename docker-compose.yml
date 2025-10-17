@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  eazyfind-db:
+    image: postgres:17
+    container_name: eazyfind-db
+    environment:
+      POSTGRES_USER: ${EAZYFIND_DB_USER}
+      POSTGRES_PASSWORD: ${EAZYFIND_DB_PASSWORD}
+      POSTGRES_DB: ${EAZYFIND_DB_NAME}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres && psql -U postgres -c 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - eazyfind-db-data:/var/lib/postgresql/data
+    networks:
+      - eazyfind-net
+
+  eazyfind-db-init:
+    image: postgres:17
+    container_name: eazyfind-db-init
+    depends_on:
+      eazyfind-db:
+        condition: service_healthy
+    entrypoint: >
+      /bin/bash -c "
+      psql -h eazyfind-db -U ${EAZYFIND_DB_USER} -d postgres -f /init/init-eazyfind.sql
+      "
+    environment:
+      PGPASSWORD: ${EAZYFIND_DB_PASSWORD}
+    volumes:
+      - ./init-eazyfind.sql:/init/init-eazyfind.sql:ro
+    networks:
+      - eazyfind-net
+
+  eazyfind-api:
+    build:
+      context: .
+      dockerfile: src/EazyFind.API/Dockerfile
+    container_name: eazyfind-api
+    depends_on:
+      eazyfind-db-init:
+        condition: service_completed_successfully
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ConnectionStrings__EazyFindDatabase=${EAZYFIND_DB_CONN}
+    ports:
+      - "${EAZYFIND_API_PORT}:8080"
+    networks:
+      - eazyfind-net
+
+  eazyfind-jobs:
+    build:
+      context: .
+      dockerfile: jobs/EazyFind.Jobs/Dockerfile
+    container_name: eazyfind-jobs
+    depends_on:
+      eazyfind-db-init:
+        condition: service_completed_successfully
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ConnectionStrings__EazyFindDatabase=${EAZYFIND_DB_CONN}
+      - ConnectionStrings__HangfireDatabase=${EAZYFIND_DB_CONN}
+    ports:
+      - "${EAZYFIND_JOBS_PORT}:8080"
+    networks:
+      - eazyfind-net
+
+  eazyfind-bot:
+    build:
+      context: .
+      dockerfile: bots/EazyFind.TelegramBot/Dockerfile
+    container_name: eazyfind-bot
+    depends_on:
+      eazyfind-db-init:
+        condition: service_completed_successfully
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ConnectionStrings__EazyFindDatabase=${EAZYFIND_DB_CONN}
+    networks:
+      - eazyfind-net
+
+volumes:
+  eazyfind-db-data:
+
+networks:
+  eazyfind-net:
+    driver: bridge

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using EazyFind.Domain.Entities;
 using EazyFind.Domain.Enums;
 using EazyFind.Domain.Interfaces.Repositories;
@@ -56,7 +53,7 @@ internal class AlertService(
         return alertRepository.GetByChatIdAsync(chatId, cancellationToken);
     }
 
-    public async Task<ProductAlert?> GetAsync(long chatId, long alertId, CancellationToken cancellationToken)
+    public async Task<ProductAlert> GetAsync(long chatId, long alertId, CancellationToken cancellationToken)
     {
         var alert = await alertRepository.GetByIdAsync(alertId, cancellationToken);
         return alert is null || alert.ChatId != chatId ? null : alert;

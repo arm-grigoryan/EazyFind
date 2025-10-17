@@ -14,7 +14,8 @@ public static class InfrastructureServiceCollectionExtensions
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContextPool<EazyFindDbContext>(opt =>
-            opt.UseNpgsql(configuration.GetConnectionString("EazyFindDatabase")));
+            opt.UseNpgsql(configuration.GetConnectionString("EazyFindDatabase"))
+               .UseSnakeCaseNamingConvention());
 
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IStoreCategoryRepository, StoreCategoryRepository>();

@@ -1,12 +1,9 @@
-using System;
-using System.Collections.Generic;
 using EazyFind.Application.Alerts;
 using EazyFind.Application.Products;
 using EazyFind.Domain.Entities;
-using Microsoft.Extensions.Logging;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace EazyFind.API.Services;

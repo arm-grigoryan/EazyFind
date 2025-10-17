@@ -8,7 +8,7 @@ namespace EazyFind.Infrastructure.Data.Repositories;
 
 internal class ProductAlertRepository(EazyFindDbContext dbContext) : IProductAlertRepository
 {
-    public Task<ProductAlert?> GetByIdAsync(long id, CancellationToken cancellationToken)
+    public Task<ProductAlert> GetByIdAsync(long id, CancellationToken cancellationToken)
     {
         return dbContext.ProductAlerts
             .AsNoTracking()

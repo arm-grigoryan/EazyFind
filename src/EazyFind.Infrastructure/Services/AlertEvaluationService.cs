@@ -1,10 +1,7 @@
-using System.Collections.Generic;
-using System;
-using System.Linq;
 using EazyFind.Application.Alerts;
-using EazyFind.Infrastructure.Data;
 using EazyFind.Domain.Entities;
 using EazyFind.Domain.Enums;
+using EazyFind.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace EazyFind.Infrastructure.Services;
@@ -27,7 +24,7 @@ internal class AlertEvaluationService(EazyFindDbContext dbContext) : IAlertEvalu
             .Include(p => p.StoreCategory)
                 .ThenInclude(sc => sc.Category)
             .Where(p => !p.IsDeleted)
-            .Where(p => p.LastSyncedAt >= since)
+            //.Where(p => p.LastSyncedAt >= since)
             .OrderByDescending(p => p.LastSyncedAt)
             .ThenBy(p => p.Id)
             .Where(p => !dbContext.ProductAlertMatches.Any(m => m.AlertId == alert.Id && m.ProductId == p.Id.ToString()));
