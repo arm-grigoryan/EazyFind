@@ -1,4 +1,4 @@
-namespace EazyFind.TelegramBot.Options;
+namespace EazyFind.Application.Messaging;
 
 public class TelegramBotOptions
 {

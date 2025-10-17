@@ -23,8 +23,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EazyFind.Jobs", "jobs\EazyF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EazyFind.TelegramBot", "bots\EazyFind.TelegramBot\EazyFind.TelegramBot.csproj", "{9EC635C8-FBF8-4550-8C5C-C72F3B3B2E80}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EazyFind.WebApp", "src\EazyFind.WebApp\EazyFind.WebApp.csproj", "{8C2A61CD-AAC0-084C-65B0-9963488446B6}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,10 +53,6 @@ Global
 		{9EC635C8-FBF8-4550-8C5C-C72F3B3B2E80}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9EC635C8-FBF8-4550-8C5C-C72F3B3B2E80}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9EC635C8-FBF8-4550-8C5C-C72F3B3B2E80}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8C2A61CD-AAC0-084C-65B0-9963488446B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8C2A61CD-AAC0-084C-65B0-9963488446B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8C2A61CD-AAC0-084C-65B0-9963488446B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8C2A61CD-AAC0-084C-65B0-9963488446B6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -70,7 +64,6 @@ Global
 		{E063BE82-27E2-4938-93BA-10EB6925A8F1} = {AC9E5FB5-BB64-4EDC-A5EB-53315267D4D5}
 		{D77BA309-1B6F-4F34-A423-BC2934BB3DE8} = {A2E94251-732D-4608-A465-E9A071DEEF03}
 		{9EC635C8-FBF8-4550-8C5C-C72F3B3B2E80} = {9B07F371-CBD1-48F9-9616-32DC7F868C71}
-		{8C2A61CD-AAC0-084C-65B0-9963488446B6} = {AC9E5FB5-BB64-4EDC-A5EB-53315267D4D5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A82AA6DC-7CA1-41F3-87AF-93FC2D12B211}

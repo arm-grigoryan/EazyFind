@@ -1,6 +1,6 @@
 using EazyFind.Application;
 using EazyFind.Infrastructure;
-using EazyFind.TelegramBot.Options;
+using EazyFind.Application.Messaging;
 using EazyFind.TelegramBot.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +28,10 @@ builder.Services.AddLogging(logging =>
 });
 
 builder.Services.AddSingleton<ConversationStateService>();
+builder.Services.AddSingleton<AlertConversationStateService>();
+builder.Services.AddSingleton<AlertInteractionService>();
 builder.Services.AddSingleton<UpdateHandler>();
+builder.Services.AddSingleton<AlertBotService>();
 builder.Services.AddHostedService<BotHostedService>();
 builder.Services.AddSingleton<ProductSearchService>();
 

@@ -1,9 +1,9 @@
+﻿using EazyFind.Application.Products;
 using EazyFind.Domain.Entities;
 using EazyFind.Domain.Enums;
-using EazyFind.TelegramBot.Extensions;
+using EazyFind.Domain.Extensions;
 using EazyFind.TelegramBot.Models;
 using Microsoft.Extensions.Logging;
-using System.Net;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -18,12 +18,16 @@ public class UpdateHandler : IUpdateHandler
 {
     private readonly ConversationStateService _stateService;
     private readonly ProductSearchService _productSearchService;
+    private readonly AlertInteractionService _alertInteractionService;
+    private readonly IProductMessageBuilder _productMessageBuilder;
     private readonly ILogger<UpdateHandler> _logger;
 
-    public UpdateHandler(ConversationStateService stateService, ProductSearchService productSearchService, ILogger<UpdateHandler> logger)
+    public UpdateHandler(ConversationStateService stateService, ProductSearchService productSearchService, AlertInteractionService alertInteractionService, IProductMessageBuilder productMessageBuilder, ILogger<UpdateHandler> logger)
     {
         _stateService = stateService;
         _productSearchService = productSearchService;
+        _alertInteractionService = alertInteractionService;
+        _productMessageBuilder = productMessageBuilder;
         _logger = logger;
     }
 
@@ -70,6 +74,16 @@ public class UpdateHandler : IUpdateHandler
         var chatId = message.Chat.Id;
         var text = message.Text.Trim();
 
+        if (await _alertInteractionService.TryHandleCommandAsync(botClient, message, cancellationToken))
+        {
+            return;
+        }
+
+        if (await _alertInteractionService.TryHandleMessageAsync(botClient, message, cancellationToken))
+        {
+            return;
+        }
+
         if (string.Equals(text, "/start", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(text, "/restart", StringComparison.OrdinalIgnoreCase))
         {
@@ -114,6 +128,11 @@ public class UpdateHandler : IUpdateHandler
     private async Task HandleCallbackQueryAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery, CancellationToken cancellationToken)
     {
         if (callbackQuery.Message is null || callbackQuery.Data is null)
+        {
+            return;
+        }
+
+        if (await _alertInteractionService.TryHandleCallbackAsync(botClient, callbackQuery, cancellationToken))
         {
             return;
         }
@@ -344,56 +363,19 @@ public class UpdateHandler : IUpdateHandler
 
     private async Task SendProductAsync(ITelegramBotClient botClient, long chatId, Product product, CancellationToken cancellationToken)
     {
-        var captionBuilder = new StringBuilder();
-        captionBuilder.AppendLine($"<b>{Escape(product.Name)}</b>");
-        captionBuilder.AppendLine($"Price: {product.Price:0.##}");
-
-        var storeName = product.StoreCategory?.Store?.Name;
-        if (!string.IsNullOrWhiteSpace(storeName))
-        {
-            captionBuilder.AppendLine($"Store: {Escape(storeName)}");
-        }
-        else if (product.StoreCategory is { StoreKey: var storeKey })
-        {
-            captionBuilder.AppendLine($"Store: {Escape(storeKey.ToDisplayName())}");
-        }
-
-        string? categoryLabel = null;
-        if (product.StoreCategory?.Category?.Type is CategoryType resolvedCategory)
-        {
-            categoryLabel = resolvedCategory.ToDisplayName();
-        }
-        else if (product.StoreCategory is { CategoryType: var categoryType })
-        {
-            categoryLabel = categoryType.ToDisplayName();
-        }
-
-        if (string.IsNullOrWhiteSpace(categoryLabel) &&
-            !string.IsNullOrWhiteSpace(product.StoreCategory?.OriginalCategoryName))
-        {
-            categoryLabel = product.StoreCategory!.OriginalCategoryName;
-        }
-
-        if (!string.IsNullOrWhiteSpace(categoryLabel))
-        {
-            captionBuilder.AppendLine($"Category: {Escape(categoryLabel)}");
-        }
-
-        captionBuilder.AppendLine($"Last synced: {product.LastSyncedAt:G}");
+        var message = _productMessageBuilder.Build(product);
 
         InlineKeyboardMarkup? markup = null;
-        if (!string.IsNullOrWhiteSpace(product.Url))
+        if (!string.IsNullOrWhiteSpace(message.Url))
         {
-            markup = new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("Open in store", product.Url));
+            markup = new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("Open in store", message.Url));
         }
-
-        var caption = captionBuilder.ToString().Trim();
 
         try
         {
-            if (!string.IsNullOrWhiteSpace(product.ImageUrl))
+            if (!string.IsNullOrWhiteSpace(message.PhotoUrl))
             {
-                await botClient.SendPhotoAsync(chatId, InputFile.FromUri(product.ImageUrl), caption: caption, parseMode: ParseMode.Html, replyMarkup: markup, cancellationToken: cancellationToken);
+                await botClient.SendPhotoAsync(chatId, InputFile.FromUri(message.PhotoUrl), caption: message.Caption, parseMode: ParseMode.Html, replyMarkup: markup, cancellationToken: cancellationToken);
                 return;
             }
         }
@@ -402,7 +384,25 @@ public class UpdateHandler : IUpdateHandler
             _logger.LogWarning(ex, "Failed to send photo for product {ProductId}", product.Id);
         }
 
-        await botClient.SendTextMessageAsync(chatId, caption, parseMode: ParseMode.Html, replyMarkup: markup, cancellationToken: cancellationToken);
+        await botClient.SendTextMessageAsync(chatId, message.Caption, parseMode: ParseMode.Html, replyMarkup: markup, cancellationToken: cancellationToken);
+    }
+
+    private static async Task SendWelcomeAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
+    {
+        var skipKeyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new KeyboardButton[] { "Skip" }
+        })
+        {
+            ResizeKeyboard = true,
+            OneTimeKeyboard = true
+        };
+
+        var message = new StringBuilder();
+        message.AppendLine("Welcome to EazyFind!");
+        message.AppendLine("Enter keywords to search for products or tap Skip to search by filters only.");
+
+        await botClient.SendTextMessageAsync(chatId, message.ToString(), replyMarkup: skipKeyboard, cancellationToken: cancellationToken);
     }
 
     private static InlineKeyboardMarkup BuildStoreKeyboard(UserSession session)
@@ -451,25 +451,5 @@ public class UpdateHandler : IUpdateHandler
         });
 
         return new InlineKeyboardMarkup(rows);
-    }
-
-    private static string Escape(string value) => string.IsNullOrEmpty(value) ? string.Empty : WebUtility.HtmlEncode(value);
-
-    private static async Task SendWelcomeAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
-    {
-        var skipKeyboard = new ReplyKeyboardMarkup(new[]
-        {
-            new KeyboardButton[] { "Skip" }
-        })
-        {
-            ResizeKeyboard = true,
-            OneTimeKeyboard = true
-        };
-
-        var message = new StringBuilder();
-        message.AppendLine("Welcome to EazyFind!");
-        message.AppendLine("Enter keywords to search for products or tap Skip to search by filters only.");
-
-        await botClient.SendTextMessageAsync(chatId, message.ToString(), replyMarkup: skipKeyboard, cancellationToken: cancellationToken);
     }
 }
