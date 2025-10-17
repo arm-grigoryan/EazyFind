@@ -1,0 +1,52 @@
+name: .NET CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Enable Docker Daemon
+      run: |
+        sudo systemctl start docker
+        docker --version
+        docker ps
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - name: Deploy to VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_KEY }}
+          script: |
+            if [ -d ~/eazyfind/.git ]; then
+              cd ~/eazyfind
+              git pull
+            else
+              git clone https://github.com/${{ github.repository }}.git ~/eazyfind
+              cd ~/kickoff
+            fi
+            docker-compose down && docker-compose up -d --build
