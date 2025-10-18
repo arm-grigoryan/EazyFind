@@ -14,6 +14,8 @@ public class Product
     public DateTime CreatedAt { get; set; }
     public DateTime? DeletionDate { get; set; }
 
+    public ICollection<ProductAlertMatch> Matches { get; set; } = new List<ProductAlertMatch>();
+
     public override string ToString()
     {
         return $"{nameof(Url)}: {Url}\n" +

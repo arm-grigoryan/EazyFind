@@ -2,6 +2,7 @@ using EazyFind.Application.Alerts;
 using EazyFind.Domain.Entities;
 using EazyFind.Domain.Enums;
 using EazyFind.Infrastructure.Data;
+using EazyFind.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace EazyFind.Infrastructure.Services;
@@ -17,17 +18,19 @@ internal class AlertEvaluationService(EazyFindDbContext dbContext) : IAlertEvalu
 
         var since = alert.LastCheckedUtc ?? DateTime.UtcNow.AddHours(-24);
 
+        var matchedIdsSet = (await dbContext.ProductAlertMatches
+            .Where(m => m.AlertId == alert.Id)
+            .Select(m => m.ProductId)
+            .ToListAsync(cancellationToken))
+            .ToHashSet();
+
         var query = dbContext.Products
             .AsNoTracking()
-            .Include(p => p.StoreCategory)
-                .ThenInclude(sc => sc.Store)
-            .Include(p => p.StoreCategory)
-                .ThenInclude(sc => sc.Category)
-            .Where(p => !p.IsDeleted)
-            //.Where(p => p.LastSyncedAt >= since)
-            .OrderByDescending(p => p.LastSyncedAt)
-            .ThenBy(p => p.Id)
-            .Where(p => !dbContext.ProductAlertMatches.Any(m => m.AlertId == alert.Id && m.ProductId == p.Id.ToString()));
+            .Include(p => p.StoreCategory).ThenInclude(sc => sc.Store)
+            .Include(p => p.StoreCategory).ThenInclude(sc => sc.Category)
+            .Where(p => !p.IsDeleted && p.LastSyncedAt >= since && !matchedIdsSet.Contains(p.Id))
+            .WhereIf(alert.MinPrice.HasValue, p => p.Price >= alert.MinPrice.Value)
+            .WhereIf(alert.MaxPrice.HasValue, p => p.Price <= alert.MaxPrice.Value);
 
         if (alert.StoreKeys is { Count: > 0 })
         {
@@ -43,25 +46,22 @@ internal class AlertEvaluationService(EazyFindDbContext dbContext) : IAlertEvalu
             }
         }
 
-        if (alert.MinPrice.HasValue)
+        if (!string.IsNullOrWhiteSpace(alert.SearchText))
         {
-            query = query.Where(p => p.Price >= alert.MinPrice.Value);
-        }
-
-        if (alert.MaxPrice.HasValue)
-        {
-            query = query.Where(p => p.Price <= alert.MaxPrice.Value);
-        }
-
-        var keywords = alert.SearchText
+            var keywords = alert.SearchText
             .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToArray();
 
-        foreach (var keyword in keywords)
-        {
-            var pattern = $"%{keyword}%";
-            query = query.Where(p => EF.Functions.ILike(p.Name, pattern));
+            foreach (var keyword in keywords)
+            {
+                var pattern = $"%{keyword}%";
+                query = query.Where(p => EF.Functions.ILike(p.Name, pattern));
+            }
         }
+
+        query = query
+            .OrderByDescending(p => p.LastSyncedAt)
+            .ThenBy(p => p.Id);
 
         return await query.Take(limit).ToListAsync(cancellationToken);
     }

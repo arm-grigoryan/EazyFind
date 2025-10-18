@@ -167,6 +167,11 @@ public class EazyFindDbContext(DbContextOptions<EazyFindDbContext> options) : Db
                 .WithMany(a => a.Matches)
                 .HasForeignKey(m => m.AlertId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(m => m.Product)
+                .WithMany(p => p.Matches)
+                .HasForeignKey(m => m.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         base.OnModelCreating(modelBuilder);
