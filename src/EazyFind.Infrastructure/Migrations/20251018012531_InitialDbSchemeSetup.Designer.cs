@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EazyFind.Infrastructure.Migrations
 {
     [DbContext(typeof(EazyFindDbContext))]
-    [Migration("20251018011917_ProductAlertsSchemeFixe")]
-    partial class ProductAlertsSchemeFixe
+    [Migration("20251018012531_InitialDbSchemeSetup")]
+    partial class InitialDbSchemeSetup
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

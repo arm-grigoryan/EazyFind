@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EazyFind.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialDatabaseSetup : Migration
+    public partial class InitialDbSchemeSetup : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -56,25 +56,6 @@ namespace EazyFind.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_stores", x => x.key);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "product_alert_matches",
-                columns: table => new
-                {
-                    alert_id = table.Column<long>(type: "bigint", nullable: false),
-                    product_id = table.Column<string>(type: "text", nullable: false),
-                    matched_at_utc = table.Column<DateTime>(type: "timestamptz", nullable: false, defaultValueSql: "now()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_product_alert_matches", x => new { x.alert_id, x.product_id });
-                    table.ForeignKey(
-                        name: "fk_product_alert_matches_product_alerts_alert_id",
-                        column: x => x.alert_id,
-                        principalTable: "product_alerts",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -132,6 +113,36 @@ namespace EazyFind.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "product_alert_matches",
+                columns: table => new
+                {
+                    alert_id = table.Column<long>(type: "bigint", nullable: false),
+                    product_id = table.Column<int>(type: "integer", nullable: false),
+                    matched_at_utc = table.Column<DateTime>(type: "timestamptz", nullable: false, defaultValueSql: "now()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_product_alert_matches", x => new { x.alert_id, x.product_id });
+                    table.ForeignKey(
+                        name: "fk_product_alert_matches_product_alerts_alert_id",
+                        column: x => x.alert_id,
+                        principalTable: "product_alerts",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_product_alert_matches_products_product_id",
+                        column: x => x.product_id,
+                        principalTable: "products",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_product_alert_matches_product_id",
+                table: "product_alert_matches",
+                column: "product_id");
+
             migrationBuilder.CreateIndex(
                 name: "ix_product_alerts_active",
                 table: "product_alerts",
@@ -184,10 +195,10 @@ namespace EazyFind.Infrastructure.Migrations
                 name: "product_alert_matches");
 
             migrationBuilder.DropTable(
-                name: "products");
+                name: "product_alerts");
 
             migrationBuilder.DropTable(
-                name: "product_alerts");
+                name: "products");
 
             migrationBuilder.DropTable(
                 name: "store_categories");
