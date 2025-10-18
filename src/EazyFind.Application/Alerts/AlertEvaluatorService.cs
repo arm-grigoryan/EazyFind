@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Globalization;
 
 namespace EazyFind.Application.Alerts;
 
@@ -109,7 +108,7 @@ public class AlertEvaluatorService(
                 .Select(product => new ProductAlertMatch
                 {
                     AlertId = alert.Id,
-                    ProductId = product.Id.ToString(CultureInfo.InvariantCulture),
+                    ProductId = product.Id,
                     MatchedAtUtc = now
                 })
                 .ToList();
