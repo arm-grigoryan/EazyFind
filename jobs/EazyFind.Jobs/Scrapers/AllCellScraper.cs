@@ -1,6 +1,7 @@
 ﻿using EazyFind.Domain.Entities;
 using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Constants;
+using EazyFind.Jobs.Helpers;
 using EazyFind.Jobs.Scrapers.Interfaces;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
@@ -28,21 +29,23 @@ public class AllCellScraper : IScraper
     {
         var httpClient = _httpClientFactory.CreateClient(nameof(AllCellScraper));
 
-        var paginationPart = "/page/{0}/";
+        var paginationPart = "p";
         var pageNumber = 1;
+
         List<Product> internalProducts = [];
 
         while (true)
         {
             try
             {
-                var htmlString = await httpClient.GetStringAsync($"{pageUrl}{string.Format(paginationPart, pageNumber)}", cancellationToken);
+                var htmlString = await httpClient.GetStringAsync(UrlBuilderHelper.AddOrUpdateQueryParam(
+                    pageUrl, new Dictionary<string, string> { { paginationPart, pageNumber.ToString() } }), cancellationToken);
 
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlString);
 
-                var products = htmlDoc.DocumentNode.Descendants("div")
-                                                   .Where(x => x.HasClass("product-inner"));
+                var products = htmlDoc.DocumentNode.Descendants("li")
+                                                   .Where(x => x.HasClass("product-item"));
 
                 if (products?.Any() is not true)
                 {
@@ -57,20 +60,27 @@ public class AllCellScraper : IScraper
                     try
                     {
                         var productUrl = product.Descendants("a")
-                                                .First(x => x.GetAttributeValue("class", string.Empty).Contains("product__link"))
+                                                .First(x => x.GetAttributeValue("class", string.Empty).Contains("product-item-link"))
                                                 .GetAttributeValue("href", string.Empty);
 
-                        var imageUrl = product.Descendants("img").First()
-                                              .GetAttributeValue("data-src", string.Empty);
+                        if (internalProducts.Exists(p => p.Url.Equals(productUrl, StringComparison.InvariantCultureIgnoreCase)))
+                        {
+                            _logger.LogInformation(LogMessages.FinishedScrapingPageItems, nameof(AllCellScraper), pageNumber);
+                            _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(AllCellScraper), internalProducts.Count);
+                            return internalProducts;
+                        }
 
-                        var name = product.Descendants("h2")
-                                          .First(x => x.GetAttributeValue("class", string.Empty).Contains("product__title"))
+                        var imageUrl = product.Descendants("img").First()
+                                              .GetAttributeValue("src", string.Empty);
+
+                        var name = product.Descendants("a")
+                                          .First(x => x.GetAttributeValue("class", string.Empty).Contains("product-item-link"))
                                           .InnerText;
 
-                        var priceText = product.Descendants("bdi")
-                                               .FirstOrDefault()
+                        var priceText = product.Descendants("span")
+                                               .FirstOrDefault(x => x.HasClass("price"))
                                                ?.InnerText
-                                               ?.Trim();
+                                               .Trim();
 
                         var parsed = false;
                         decimal price = 0;
