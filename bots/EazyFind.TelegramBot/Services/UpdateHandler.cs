@@ -73,6 +73,23 @@ public class UpdateHandler : IUpdateHandler
 
         var chatId = message.Chat.Id;
         var text = message.Text.Trim();
+        var normalizedText = text.ToLowerInvariant();
+
+        switch (normalizedText)
+        {
+            case "/info":
+                await SendInfoAsync(botClient, chatId, cancellationToken);
+                return;
+            case "/support":
+            case "/feedback":
+                await SendSupportAsync(botClient, chatId, cancellationToken);
+                return;
+            case "/search":
+                var searchSession = _stateService.Reset(chatId);
+                await SendWelcomeAsync(botClient, chatId, cancellationToken);
+                searchSession.Stage = ConversationStage.AwaitingSearchText;
+                return;
+        }
 
         if (await _alertInteractionService.TryHandleCommandAsync(botClient, message, cancellationToken))
         {
@@ -400,9 +417,33 @@ public class UpdateHandler : IUpdateHandler
 
         var message = new StringBuilder();
         message.AppendLine("Welcome to EazyFind!");
+        message.AppendLine("• Use /search anytime to start a new product search.");
+        message.AppendLine("• Use /myalerts to manage your saved alerts.");
+        message.AppendLine();
         message.AppendLine("Enter keywords to search for products or tap Skip to search by filters only.");
 
         await botClient.SendTextMessageAsync(chatId, message.ToString(), replyMarkup: skipKeyboard, cancellationToken: cancellationToken);
+    }
+
+    private static Task<Message> SendInfoAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
+    {
+        var message = new StringBuilder();
+        message.AppendLine("EazyFind keeps an eye on your favorite stores.");
+        message.AppendLine("• Search in real time across stores and categories with /search.");
+        message.AppendLine("• Create custom alerts with /myalerts or /alert to get notified about new deals.");
+        message.AppendLine("• Pause, resume, or delete alerts anytime from the alerts menu.");
+
+        return botClient.SendTextMessageAsync(chatId, message.ToString(), cancellationToken: cancellationToken);
+    }
+
+    private static Task<Message> SendSupportAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
+    {
+        var message = new StringBuilder();
+        message.AppendLine("Need help or want to share feedback?");
+        message.AppendLine("Just send us a message here and we'll get back to you.");
+        message.AppendLine("We're also building dedicated support tools right inside the bot.");
+
+        return botClient.SendTextMessageAsync(chatId, message.ToString(), cancellationToken: cancellationToken);
     }
 
     private static InlineKeyboardMarkup BuildStoreKeyboard(UserSession session)
