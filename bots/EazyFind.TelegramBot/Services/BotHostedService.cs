@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
@@ -40,12 +40,17 @@ public class BotHostedService : BackgroundService
     private async Task ConfigureBotProfileAsync(CancellationToken cancellationToken)
     {
         await _botClient.SetMyShortDescriptionAsync(
-            "Search products and manage deal alerts in seconds.",
+            "🔍 Փնտրիր ապրանքներ հայկական օնլայն խանութներում\n🔔 Ստացիր անհատական ծանուցումներ քեզ հետաքրքրող ապրանքների համար\n",
             cancellationToken: cancellationToken);
 
         await _botClient.SetMyDescriptionAsync(
-            "EazyFind helps you explore stores in real time and track new deals. " +
-            "Use /search to look up products, /myalerts to manage notifications, and /support to reach the team.",
+            "🔍 Ակնթարթային որոնում հայկական օնլայն խանութներում։\n" +
+            "🔔 Անհատական ծանուցումներ՝ նոր ապրանքների մասին առաջինն իմանալու համար։\n\n" +
+            "🤖 Ինչպես օգտագործել բոտը\n\n" +
+            "➡️ Սեղմեք <<START>> կոճակը՝ բոտն ակտիվացնելու համար\n" +
+            "👉 Հետևեք հրահանգներին՝ որոնում սկսելու կամ ծանուցումներ ստեղծելու համար\n" +
+            "💬 Ունեք հարցեր կամ առաջարկներ - գրեք /support բաժնում\n\n" +
+            "👇 Գտեք Ձեզ հետաքրքրող ապրանքները վայրկյանների ընթացքում 👇",
             cancellationToken: cancellationToken);
     }
 
@@ -53,11 +58,10 @@ public class BotHostedService : BackgroundService
     {
         var commands = new List<BotCommand>
         {
-            new() { Command = "info", Description = "What EazyFind can do" },
-            new() { Command = "support", Description = "Get help or share feedback" },
-            new() { Command = "feedback", Description = "Share suggestions with the team" },
-            new() { Command = "search", Description = "Search for products" },
-            new() { Command = "myalerts", Description = "Manage your alerts" }
+            new() { Command = "info", Description = "Ինչ կարող է անել EazyFind բոտը" },
+            new() { Command = "support", Description = "Հարցեր կամ առաջարկներ" },
+            new() { Command = "search", Description = "Սկսել նոր որոնում" },
+            new() { Command = "myalerts", Description = "Կառավարել ծանուցումները" }
         };
 
         return _botClient.SetMyCommandsAsync(commands, cancellationToken: cancellationToken);

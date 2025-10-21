@@ -81,7 +81,6 @@ public class UpdateHandler : IUpdateHandler
                 await SendInfoAsync(botClient, chatId, cancellationToken);
                 return;
             case "/support":
-            case "/feedback":
                 await SendSupportAsync(botClient, chatId, cancellationToken);
                 return;
             case "/search":
