@@ -46,7 +46,7 @@ public class VenusScraper : IScraper
                 htmlDoc.LoadHtml(htmlString);
 
                 var products = htmlDoc.DocumentNode.Descendants("div")
-                                                   .Where(x => x.HasClass("product-block"));
+                                                   .Where(x => x.HasClass("product-layout"));
 
                 if (products?.Any() is not true)
                 {
@@ -71,10 +71,10 @@ public class VenusScraper : IScraper
                                           .Descendants("a").First()
                                           .InnerText;
 
-                        var priceText = product.Descendants("p")
-                                               .First(x => x.HasClass("price"))
-                                               .InnerText
-                                               .Trim();
+                        var priceText = product.Descendants("div")
+                                               .FirstOrDefault(x => x.HasClass("price"))
+                                               ?.InnerText
+                                               ?.Trim();
 
                         var parsed = false;
                         decimal price = 0;
