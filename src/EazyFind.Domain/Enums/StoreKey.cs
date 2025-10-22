@@ -11,5 +11,5 @@ public enum StoreKey
     VLV,
     MobileCentre,
     Venus,
-    AllCell
+    AllSell
 }

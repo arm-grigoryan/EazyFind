@@ -22,7 +22,7 @@ public static class ScraperServiceCollectionExtensions
         services.AddKeyedScoped<IScraper, VLVApiScraper>(StoreKey.VLV);
         services.AddKeyedScoped<IScraper, MobileCentreScraper>(StoreKey.MobileCentre);
         services.AddKeyedScoped<IScraper, VenusScraper>(StoreKey.Venus);
-        services.AddKeyedScoped<IScraper, AllCellScraper>(StoreKey.AllCell);
+        services.AddKeyedScoped<IScraper, AllCellScraper>(StoreKey.AllSell);
 
         return services;
     }
