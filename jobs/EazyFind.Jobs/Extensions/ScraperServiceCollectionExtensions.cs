@@ -22,7 +22,7 @@ public static class ScraperServiceCollectionExtensions
         services.AddKeyedScoped<IScraper, VLVApiScraper>(StoreKey.VLV);
         services.AddKeyedScoped<IScraper, MobileCentreScraper>(StoreKey.MobileCentre);
         services.AddKeyedScoped<IScraper, VenusScraper>(StoreKey.Venus);
-        services.AddKeyedScoped<IScraper, AllCellScraper>(StoreKey.AllSell);
+        services.AddKeyedScoped<IScraper, AllSellScraper>(StoreKey.AllSell);
 
         return services;
     }
@@ -38,7 +38,7 @@ public static class ScraperServiceCollectionExtensions
         services.AddHttpClient(nameof(VenusScraper));
 
 
-        services.AddHttpClient(nameof(AllCellScraper))
+        services.AddHttpClient(nameof(AllSellScraper))
             .ConfigurePrimaryHttpMessageHandler(sp =>
             {
                 var smartProxySettings = sp.GetRequiredService<IOptions<SmartProxySettings>>().Value;
