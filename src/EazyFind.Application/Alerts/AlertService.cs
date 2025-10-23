@@ -32,6 +32,12 @@ internal class AlertService(
             throw new ArgumentException("Minimum price cannot be greater than maximum price.", nameof(request));
         }
 
+        var existingAlerts = await alertRepository.GetByChatIdAsync(request.ChatId, cancellationToken);
+        if (existingAlerts.Count >= 5)
+        {
+            throw new ArgumentException("Maximum 5 alerts are allowed per user.");
+        }
+
         var storeKeys = NormalizeStoreKeys(request.StoreKeys);
 
         var alert = new ProductAlert

@@ -9,15 +9,15 @@ using System.Text.RegularExpressions;
 
 namespace EazyFind.Jobs.Scrapers;
 
-public class AllCellScraper : IScraper
+public class AllSellScraper : IScraper
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<AllCellScraper> _logger;
+    private readonly ILogger<AllSellScraper> _logger;
     private readonly ScraperConfigs _jobConfigs;
 
-    public AllCellScraper(
+    public AllSellScraper(
         IHttpClientFactory httpClientFactory,
-        ILogger<AllCellScraper> logger,
+        ILogger<AllSellScraper> logger,
         IOptions<ScraperConfigs> options)
     {
         _httpClientFactory = httpClientFactory;
@@ -27,7 +27,7 @@ public class AllCellScraper : IScraper
 
     public async Task<List<Product>> ScrapeAsync(string pageUrl, CancellationToken cancellationToken)
     {
-        var httpClient = _httpClientFactory.CreateClient(nameof(AllCellScraper));
+        var httpClient = _httpClientFactory.CreateClient(nameof(AllSellScraper));
 
         var paginationPart = "p";
         var pageNumber = 1;
@@ -49,7 +49,7 @@ public class AllCellScraper : IScraper
 
                 if (products?.Any() is not true)
                 {
-                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(AllCellScraper));
+                    _logger.LogInformation(LogMessages.ProductsNotScraped, nameof(AllSellScraper));
                     break;
                 }
 
@@ -65,8 +65,8 @@ public class AllCellScraper : IScraper
 
                         if (internalProducts.Exists(p => p.Url.Equals(productUrl, StringComparison.InvariantCultureIgnoreCase)))
                         {
-                            _logger.LogInformation(LogMessages.FinishedScrapingPageItems, nameof(AllCellScraper), pageNumber);
-                            _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(AllCellScraper), internalProducts.Count);
+                            _logger.LogInformation(LogMessages.FinishedScrapingPageItems, nameof(AllSellScraper), pageNumber);
+                            _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(AllSellScraper), internalProducts.Count);
                             return internalProducts;
                         }
 
@@ -75,7 +75,8 @@ public class AllCellScraper : IScraper
 
                         var name = product.Descendants("a")
                                           .First(x => x.GetAttributeValue("class", string.Empty).Contains("product-item-link"))
-                                          .InnerText;
+                                          .InnerText
+                                          .Trim();
 
                         var priceText = product.Descendants("span")
                                                .FirstOrDefault(x => x.HasClass("price"))
@@ -111,12 +112,12 @@ public class AllCellScraper : IScraper
                     {
                         errorCount++;
                         _logger.LogError(ex, LogMessages.ExceptionOccuredCollectingProductInfo,
-                                        nameof(AllCellScraper), pageNumber, index, product.InnerHtml);
+                                        nameof(AllSellScraper), pageNumber, index, product.InnerHtml);
 
                         if (errorCount > _jobConfigs.MaxErrorCountToContinue)
                         {
                             throw new Exception(string.Format(LogMessages.MaxCountOfErrorsReached,
-                                                nameof(AllCellScraper),
+                                                nameof(AllSellScraper),
                                                 _jobConfigs.MaxErrorCountToContinue), ex);
                         }
                         continue;
@@ -127,12 +128,12 @@ public class AllCellScraper : IScraper
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(AllCellScraper));
+                _logger.LogError(ex, LogMessages.ExceptionOccuredDuringExecution, nameof(AllSellScraper));
                 break;
             }
         }
 
-        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(AllCellScraper), internalProducts.Count);
+        _logger.LogInformation(LogMessages.TotalScrapedSuccessfully, nameof(AllSellScraper), internalProducts.Count);
         return internalProducts;
     }
 }
