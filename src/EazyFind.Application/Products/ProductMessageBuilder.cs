@@ -26,7 +26,7 @@ internal class ProductMessageBuilder : IProductMessageBuilder
             captionBuilder.AppendLine($"Store: {Escape(storeKey.ToDisplayName())}");
         }
 
-        string? categoryLabel = null;
+        string categoryLabel = null;
         if (product.StoreCategory?.Category?.Type is CategoryType resolvedCategory)
         {
             categoryLabel = resolvedCategory.ToDisplayName();

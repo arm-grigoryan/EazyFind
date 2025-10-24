@@ -61,7 +61,11 @@ public class BotHostedService : BackgroundService
             new() { Command = "info", Description = "Ինչ կարող է անել EazyFind բոտը" },
             new() { Command = "support", Description = "Հարցեր կամ առաջարկներ" },
             new() { Command = "search", Description = "Սկսել նոր որոնում" },
-            new() { Command = "myalerts", Description = "Կառավարել ծանուցումները" }
+            new() { Command = "alert", Description = "Ստեղծել նոր ծանուցում" },
+            new() { Command = "myalerts", Description = "Կառավարել ծանուցումները" },
+            new() { Command = "pausealerts", Description = "Կասեցնել բոլոր ծանուցումները" },
+            new() { Command = "resumealerts", Description = "Ակտիվացնել բոլոր ծանուցումները" },
+            new() { Command = "deletealert", Description = "Ջնջել ծանուցում" }
         };
 
         return _botClient.SetMyCommandsAsync(commands, cancellationToken: cancellationToken);
