@@ -18,25 +18,25 @@ public class AlertBotService
         _logger = logger;
     }
 
-    public Task<ProductAlert> CreateAsync(AlertCreateRequest request, CancellationToken cancellationToken)
+    public async Task<ProductAlert> CreateAsync(AlertCreateRequest request, CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
         var service = scope.ServiceProvider.GetRequiredService<IAlertService>();
-        return service.CreateAsync(request, cancellationToken);
+        return await service.CreateAsync(request, cancellationToken);
     }
 
-    public Task<IReadOnlyList<ProductAlert>> ListAsync(long chatId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ProductAlert>> ListAsync(long chatId, CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
         var service = scope.ServiceProvider.GetRequiredService<IAlertService>();
-        return service.ListAsync(chatId, cancellationToken);
+        return await service.ListAsync(chatId, cancellationToken);
     }
 
-    public Task<ProductAlert> GetAsync(long chatId, long alertId, CancellationToken cancellationToken)
+    public async Task<ProductAlert> GetAsync(long chatId, long alertId, CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
         var service = scope.ServiceProvider.GetRequiredService<IAlertService>();
-        return service.GetAsync(chatId, alertId, cancellationToken);
+        return await service.GetAsync(chatId, alertId, cancellationToken);
     }
 
     public Task EnableAsync(long chatId, long alertId, CancellationToken cancellationToken) => ExecuteAsync(s => s.EnableAsync(chatId, alertId, cancellationToken));
