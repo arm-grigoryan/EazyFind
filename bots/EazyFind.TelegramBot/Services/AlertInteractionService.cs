@@ -287,7 +287,7 @@ public class AlertInteractionService
 
     private async Task HandleMinPriceAsync(ITelegramBotClient botClient, long chatId, AlertCreationSession session, string text, CancellationToken cancellationToken)
     {
-        if (text.Equals("skip", StringComparison.OrdinalIgnoreCase))
+        if (text.Equals("Բաց թողնել", StringComparison.OrdinalIgnoreCase))
         {
             session.MinPrice = null;
             session.Stage = AlertConversationStage.AwaitingMaxPrice;
@@ -308,7 +308,7 @@ public class AlertInteractionService
 
     private async Task HandleMaxPriceAsync(ITelegramBotClient botClient, long chatId, AlertCreationSession session, string text, CancellationToken cancellationToken)
     {
-        if (text.Equals("skip", StringComparison.OrdinalIgnoreCase))
+        if (text.Equals("Բաց թողնել", StringComparison.OrdinalIgnoreCase))
         {
             session.MaxPrice = null;
         }
