@@ -2,6 +2,7 @@ using EazyFind.Application;
 using EazyFind.Infrastructure;
 using EazyFind.Infrastructure.Data;
 using EazyFind.Jobs.Configuration;
+using EazyFind.Jobs.Data;
 using EazyFind.Jobs.Extensions;
 using EazyFind.Jobs.Jobs;
 using Hangfire;
@@ -74,7 +75,8 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<EazyFindDbContext>();
-    db.Database.Migrate();
+    await db.Database.MigrateAsync();
+    await DatabaseSeeder.SeedAsync(scope.ServiceProvider);
 }
 
 if (app.Environment.IsDevelopment())
