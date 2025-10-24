@@ -19,6 +19,23 @@ services:
     networks:
       - eazyfind-net
 
+  eazyfind-api:
+    build:
+      context: .
+      dockerfile: src/EazyFind.API/Dockerfile
+    container_name: eazyfind-api
+    depends_on:
+      eazyfind-db:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ConnectionStrings__EazyFindDatabase=${EAZYFIND_DB_CONN}
+      - TelegramBot__BotToken=${EAZYFIND_BOT_TOKEN}
+    ports:
+      - "${EAZYFIND_API_PORT}:8080"
+    networks:
+      - eazyfind-net
+
   eazyfind-jobs:
     build:
       context: .
