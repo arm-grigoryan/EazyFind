@@ -100,8 +100,7 @@ public class UpdateHandler : IUpdateHandler
             return;
         }
 
-        if (string.Equals(text, "/start", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(text, "/restart", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(text, "/start", StringComparison.OrdinalIgnoreCase))
         {
             var session = _stateService.Reset(chatId);
             await SendWelcomeAsync(botClient, chatId, cancellationToken);
@@ -123,16 +122,16 @@ public class UpdateHandler : IUpdateHandler
                 await HandleSearchTextAsync(botClient, chatId, existingSession, text, cancellationToken);
                 break;
             case ConversationStage.SelectingStores:
-                await botClient.SendTextMessageAsync(chatId, "Please use the buttons to choose stores.", cancellationToken: cancellationToken);
+                await botClient.SendTextMessageAsync(chatId, "Սեղմեք կոճակներին` խանութներն ընտրելու համար։", cancellationToken: cancellationToken);
                 break;
             case ConversationStage.SelectingCategories:
-                await botClient.SendTextMessageAsync(chatId, "Please use the buttons to choose categories.", cancellationToken: cancellationToken);
+                await botClient.SendTextMessageAsync(chatId, "Սեղմեք կոճակներին` կատեգորիաներն ընտրելու համար", cancellationToken: cancellationToken);
                 break;
             case ConversationStage.AwaitingLimit:
                 await HandleLimitAsync(botClient, chatId, existingSession, text, cancellationToken);
                 break;
             case ConversationStage.Completed:
-                await botClient.SendTextMessageAsync(chatId, "Start a new search with /start.", cancellationToken: cancellationToken);
+                await botClient.SendTextMessageAsync(chatId, "Սկսեք նոր որոնում /start հրամանով։", cancellationToken: cancellationToken);
                 break;
             default:
                 await SendWelcomeAsync(botClient, chatId, cancellationToken);
@@ -156,7 +155,7 @@ public class UpdateHandler : IUpdateHandler
         var chatId = callbackQuery.Message.Chat.Id;
         if (!_stateService.TryGet(chatId, out var session) || session is null)
         {
-            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Please start with /start", cancellationToken: cancellationToken);
+            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Սկսեք /start հրամանի միջոցով", cancellationToken: cancellationToken);
             return;
         }
 
@@ -175,18 +174,18 @@ public class UpdateHandler : IUpdateHandler
         session.SelectedStores.Clear();
         session.SelectedCategories.Clear();
 
-        if (string.Equals(text, "skip", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(text, "Բաց թողնել", StringComparison.OrdinalIgnoreCase))
         {
             session.SearchText = null;
             session.Stage = ConversationStage.SelectingCategories;
 
-            await botClient.SendTextMessageAsync(chatId, "Select product categories (choose at least one).", replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
-            var prompt = await botClient.SendTextMessageAsync(chatId, "Use the buttons below to toggle categories. Press 'All categories' or 'Done' when finished.", replyMarkup: BuildCategoryKeyboard(session), cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(chatId, "Ընտրեք ապրանքների կատեգորիաներ (առնվազն 1 հատ).", replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
+            var prompt = await botClient.SendTextMessageAsync(chatId, "Օգտագործեք կոճակները` կատեգորիաներ ընտրելու համար։ Սեղմեք 'Բոլոր կատեգորիաները' կամ 'Հաստատել' վերջացնելու համար։", replyMarkup: BuildCategoryKeyboard(session), cancellationToken: cancellationToken);
             session.CategorySelectionMessageId = prompt.MessageId;
         }
         else if (text.Length < 3)
         {
-            await botClient.SendTextMessageAsync(chatId, "Please enter at least 3 characters or type 'skip'.", cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(chatId, "Խնդրում ենք մուտքագրել առնվազն 3 սիմվոլ կամ սեղմել 'Բաց թողնել' կոճակը։", cancellationToken: cancellationToken);
             return;
         }
         else
@@ -194,8 +193,8 @@ public class UpdateHandler : IUpdateHandler
             session.SearchText = text;
             session.Stage = ConversationStage.SelectingStores;
 
-            await botClient.SendTextMessageAsync(chatId, "Select the stores to search in (choose at least one).", replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
-            var prompt = await botClient.SendTextMessageAsync(chatId, "Use the buttons below to toggle stores. Press 'All stores' or 'Done' when finished.", replyMarkup: BuildStoreKeyboard(session), cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(chatId, "Ընտրեք խանութները` որոնման համար (առնվազն 1 հատ).", replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
+            var prompt = await botClient.SendTextMessageAsync(chatId, "Օգտագործեք կոճակները` խանութներ ընտրելու համար։ Սեղմեք 'Բոլոր խանութները' կամ 'Հաստատել' վերջացնելու համար։", replyMarkup: BuildStoreKeyboard(session), cancellationToken: cancellationToken);
             session.StoreSelectionMessageId = prompt.MessageId;
         }
     }
@@ -207,7 +206,7 @@ public class UpdateHandler : IUpdateHandler
         {
             if (!session.HasSelectedStores)
             {
-                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Select at least one store.", showAlert: true, cancellationToken: cancellationToken);
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Ընտրեք առնվազն 1 խանութ։", showAlert: true, cancellationToken: cancellationToken);
                 return;
             }
 
@@ -218,7 +217,7 @@ public class UpdateHandler : IUpdateHandler
             }
 
             var selectedStores = string.Join(", ", session.SelectedStores.Select(s => s.ToDisplayName()));
-            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, $"Stores selected: {selectedStores}", cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, $"Ընտրված խանութներ: {selectedStores}", cancellationToken: cancellationToken);
 
             var limitKeyboard = new ReplyKeyboardMarkup(new[]
             {
@@ -229,7 +228,7 @@ public class UpdateHandler : IUpdateHandler
                 OneTimeKeyboard = true
             };
 
-            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "How many items should be shown? (1-25)", replyMarkup: limitKeyboard, cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "Քանի՞ ապրանք եք ուզում տեսնել (1-25)", replyMarkup: limitKeyboard, cancellationToken: cancellationToken);
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
             return;
         }
@@ -269,7 +268,7 @@ public class UpdateHandler : IUpdateHandler
         {
             if (!session.HasSelectedCategories)
             {
-                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Select at least one category.", showAlert: true, cancellationToken: cancellationToken);
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Ընտրեք առնվազն 1 կատեգորիա։", showAlert: true, cancellationToken: cancellationToken);
                 return;
             }
 
@@ -280,10 +279,10 @@ public class UpdateHandler : IUpdateHandler
             }
 
             var selectedCategories = string.Join(", ", session.SelectedCategories.Select(c => c.ToDisplayName()));
-            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, $"Categories selected: {selectedCategories}", cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, $"Ընտրված կատեգորիաներ: {selectedCategories}", cancellationToken: cancellationToken);
 
-            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "Now, select the stores to search in (choose at least one).", cancellationToken: cancellationToken);
-            var prompt = await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "Use the buttons below to toggle stores. Press 'All stores' or 'Done' when finished.", replyMarkup: BuildStoreKeyboard(session), cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "Ընտրեք խանութներ` որոնում կատարելու համար (առնվազն 1 հատ).", cancellationToken: cancellationToken);
+            var prompt = await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "Օգտագործեք կոճակները` խանութներ ընտրելու համար։ Սեղմեք 'Բոլոր խանութները' կամ 'Հաստատել' վերջացնելու համար։", replyMarkup: BuildStoreKeyboard(session), cancellationToken: cancellationToken);
             session.StoreSelectionMessageId = prompt.MessageId;
 
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
@@ -322,24 +321,24 @@ public class UpdateHandler : IUpdateHandler
     {
         if (!int.TryParse(text, out var take) || take < 1 || take > 25)
         {
-            await botClient.SendTextMessageAsync(chatId, "Please enter a number between 1 and 25.", cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(chatId, "Խնդրում ենք գրել թիվ 1-25 միջակայքում։", cancellationToken: cancellationToken);
             return;
         }
 
         session.Take = take;
 
         var summaryBuilder = new StringBuilder();
-        summaryBuilder.AppendLine($"Searching for up to {take} products...");
+        summaryBuilder.AppendLine($"Փնտրում ենք մինչև {take} ապրանքներ...");
         if (!string.IsNullOrWhiteSpace(session.SearchText))
         {
-            summaryBuilder.AppendLine($"Search text: {session.SearchText}");
+            summaryBuilder.AppendLine($"Որոնման բառեր: {session.SearchText}");
         }
 
-        summaryBuilder.AppendLine($"Stores: {string.Join(", ", session.SelectedStores.Select(s => s.ToDisplayName()))}");
+        summaryBuilder.AppendLine($"Խանութներ: {string.Join(", ", session.SelectedStores.Select(s => s.ToDisplayName()))}");
 
         if (session.HasSelectedCategories)
         {
-            summaryBuilder.AppendLine($"Categories: {string.Join(", ", session.SelectedCategories.Select(c => c.ToDisplayName()))}");
+            summaryBuilder.AppendLine($"Կատեգորիաներ: {string.Join(", ", session.SelectedCategories.Select(c => c.ToDisplayName()))}");
         }
 
         await botClient.SendTextMessageAsync(chatId, summaryBuilder.ToString(), replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
@@ -359,11 +358,11 @@ public class UpdateHandler : IUpdateHandler
         var response = await _productSearchService.SearchAsync(request, cancellationToken);
         if (response is null)
         {
-            await botClient.SendTextMessageAsync(chatId, "There was a problem retrieving products. Please try again later.", cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(chatId, "Տեղի ունեցավ սխալ։ Խնդրում ենք փորձել ավելի ուշ։", cancellationToken: cancellationToken);
         }
         else if (response.Items.Count == 0)
         {
-            await botClient.SendTextMessageAsync(chatId, "No products found for the selected filters.", cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(chatId, "Նշված ֆիլտրներով ոչ մի ապրանք չի գտնվել։ Ուզու՞մ եք տեղեկացվել գտնվելու դեպքում՝ Ստեղծեք ծանուցում /alert հրամանով։", cancellationToken: cancellationToken);
         }
         else
         {
@@ -374,7 +373,7 @@ public class UpdateHandler : IUpdateHandler
         }
 
         session.Stage = ConversationStage.Completed;
-        await botClient.SendTextMessageAsync(chatId, "Search completed. Use /start to run a new search.", cancellationToken: cancellationToken);
+        await botClient.SendTextMessageAsync(chatId, "Որոնումն ավարտվեց։ Օգտագործեք /start հրամանը նոր որոնում սկսելու համար։", cancellationToken: cancellationToken);
     }
 
     private async Task SendProductAsync(ITelegramBotClient botClient, long chatId, Product product, CancellationToken cancellationToken)
@@ -384,7 +383,7 @@ public class UpdateHandler : IUpdateHandler
         InlineKeyboardMarkup? markup = null;
         if (!string.IsNullOrWhiteSpace(message.Url))
         {
-            markup = new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("Open in store", message.Url));
+            markup = new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("Տեսնել խանութում", message.Url));
         }
 
         try
@@ -407,7 +406,7 @@ public class UpdateHandler : IUpdateHandler
     {
         var skipKeyboard = new ReplyKeyboardMarkup(new[]
         {
-            new KeyboardButton[] { "Skip" }
+            new KeyboardButton[] { "Բաց թողնել" }
         })
         {
             ResizeKeyboard = true,
@@ -415,11 +414,11 @@ public class UpdateHandler : IUpdateHandler
         };
 
         var message = new StringBuilder();
-        message.AppendLine("Welcome to EazyFind!");
-        message.AppendLine("• Use /search anytime to start a new product search.");
-        message.AppendLine("• Use /myalerts to manage your saved alerts.");
+        message.AppendLine("Բարի գալուստ EazyFind!");
+        message.AppendLine("• Օգտագործեք /search ՝ նոր որոնում սկսելու համար։");
+        message.AppendLine("• Օգտագործեք /myalerts ՝ Ձեր ծանուցումները կառավարելու համար։");
         message.AppendLine();
-        message.AppendLine("Enter keywords to search for products or tap Skip to search by filters only.");
+        message.AppendLine("Գրեք բառեր որոնման համար կամ սեղմեք 'Բաց թողնել' կոճակը ՝ ֆիլտրներով որոնում կատարելու համար։");
 
         await botClient.SendTextMessageAsync(chatId, message.ToString(), replyMarkup: skipKeyboard, cancellationToken: cancellationToken);
     }
@@ -427,10 +426,10 @@ public class UpdateHandler : IUpdateHandler
     private static Task<Message> SendInfoAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
     {
         var message = new StringBuilder();
-        message.AppendLine("EazyFind keeps an eye on your favorite stores.");
-        message.AppendLine("• Search in real time across stores and categories with /search.");
-        message.AppendLine("• Create custom alerts with /myalerts or /alert to get notified about new deals.");
-        message.AppendLine("• Pause, resume, or delete alerts anytime from the alerts menu.");
+        message.AppendLine("EazyFind-ը հետևում է Ձեր նախընտրած խանութներին և ապրանքներին։");
+        message.AppendLine("• Որոնեք ակնթարթորեն Ձեր ընտրած խանութներում և կատոգորիաներում ՝ /search հրամանով։");
+        message.AppendLine("• Ստեղծեք անհատական ծանուցումներ /alert հրամանով ՝ նոր առաջարկների մասին անմիջապես տեղեկացվելու համար։");
+        message.AppendLine("• Կասեցրեք, ակտիվացրեք, կամ ջնջեք ծանուցումները ցանկացած պահի։");
 
         return botClient.SendTextMessageAsync(chatId, message.ToString(), cancellationToken: cancellationToken);
     }
@@ -438,9 +437,8 @@ public class UpdateHandler : IUpdateHandler
     private static Task<Message> SendSupportAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
     {
         var message = new StringBuilder();
-        message.AppendLine("Need help or want to share feedback?");
-        message.AppendLine("Just send us a message here and we'll get back to you.");
-        message.AppendLine("We're also building dedicated support tools right inside the bot.");
+        message.AppendLine("Օգնության կարիք ունե՞ք կամ ցանկանու՞մ եք կիսվել առաջարկներով");
+        message.AppendLine("Թողեք հաղորդագրություն և մենք կկապվենք Ձեզ հետ։");
 
         return botClient.SendTextMessageAsync(chatId, message.ToString(), cancellationToken: cancellationToken);
     }
@@ -461,9 +459,9 @@ public class UpdateHandler : IUpdateHandler
 
         rows.Add(new[]
         {
-            InlineKeyboardButton.WithCallbackData(session.SelectedStores.Count == stores.Length ? "✅ All stores" : "All stores", "store:all"),
-            InlineKeyboardButton.WithCallbackData("Clear", "store:clear"),
-            InlineKeyboardButton.WithCallbackData("Done", "store:done")
+            InlineKeyboardButton.WithCallbackData(session.SelectedStores.Count == stores.Length ? "✅ Բոլոր խանութները" : "Բոլոր խանութները", "store:all"),
+            InlineKeyboardButton.WithCallbackData("Մաքրել", "store:clear"),
+            InlineKeyboardButton.WithCallbackData("Հաստատել", "store:done")
         });
 
         return new InlineKeyboardMarkup(rows);
@@ -485,9 +483,9 @@ public class UpdateHandler : IUpdateHandler
 
         rows.Add(new[]
         {
-            InlineKeyboardButton.WithCallbackData(session.SelectedCategories.Count == categories.Length ? "✅ All categories" : "All categories", "category:all"),
-            InlineKeyboardButton.WithCallbackData("Clear", "category:clear"),
-            InlineKeyboardButton.WithCallbackData("Done", "category:done")
+            InlineKeyboardButton.WithCallbackData(session.SelectedCategories.Count == categories.Length ? "✅ Բոլոր կատեգորիաները" : "Բոլոր կատեգորիաները", "category:all"),
+            InlineKeyboardButton.WithCallbackData("Մաքրել", "category:clear"),
+            InlineKeyboardButton.WithCallbackData("Հաստատել", "category:done")
         });
 
         return new InlineKeyboardMarkup(rows);
