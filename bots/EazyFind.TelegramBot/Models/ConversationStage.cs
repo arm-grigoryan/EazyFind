@@ -7,5 +7,6 @@ public enum ConversationStage
     SelectingStores,
     SelectingCategories,
     AwaitingLimit,
-    Completed
+    Completed,
+    SupportAwaitingMessage
 }

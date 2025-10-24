@@ -1,10 +1,13 @@
-﻿using EazyFind.Application.Products;
+﻿using EazyFind.Application.Messaging;
+using EazyFind.Application.Products;
 using EazyFind.Domain.Entities;
 using EazyFind.Domain.Enums;
 using EazyFind.Domain.Extensions;
 using EazyFind.TelegramBot.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Text;
+using System.Threading;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
@@ -21,14 +24,22 @@ public class UpdateHandler : IUpdateHandler
     private readonly AlertInteractionService _alertInteractionService;
     private readonly IProductMessageBuilder _productMessageBuilder;
     private readonly ILogger<UpdateHandler> _logger;
+    private readonly TelegramBotOptions _botOptions;
 
-    public UpdateHandler(ConversationStateService stateService, ProductSearchService productSearchService, AlertInteractionService alertInteractionService, IProductMessageBuilder productMessageBuilder, ILogger<UpdateHandler> logger)
+    public UpdateHandler(
+        ConversationStateService stateService,
+        ProductSearchService productSearchService,
+        AlertInteractionService alertInteractionService,
+        IProductMessageBuilder productMessageBuilder,
+        ILogger<UpdateHandler> logger,
+        IOptions<TelegramBotOptions> botOptions)
     {
         _stateService = stateService;
         _productSearchService = productSearchService;
         _alertInteractionService = alertInteractionService;
         _productMessageBuilder = productMessageBuilder;
         _logger = logger;
+        _botOptions = botOptions.Value;
     }
 
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
@@ -81,11 +92,13 @@ public class UpdateHandler : IUpdateHandler
                 await SendInfoAsync(botClient, chatId, cancellationToken);
                 return;
             case "/support":
+                var session = _stateService.Reset(chatId);
                 await SendSupportAsync(botClient, chatId, cancellationToken);
+                session.Stage = ConversationStage.SupportAwaitingMessage;
                 return;
             case "/search":
                 var searchSession = _stateService.Reset(chatId);
-                await SendWelcomeAsync(botClient, chatId, cancellationToken);
+                await SendSearchGuideAsync(botClient, chatId, cancellationToken);
                 searchSession.Stage = ConversationStage.AwaitingSearchText;
                 return;
         }
@@ -104,7 +117,6 @@ public class UpdateHandler : IUpdateHandler
         {
             var session = _stateService.Reset(chatId);
             await SendWelcomeAsync(botClient, chatId, cancellationToken);
-            session.Stage = ConversationStage.AwaitingSearchText;
             return;
         }
 
@@ -131,11 +143,13 @@ public class UpdateHandler : IUpdateHandler
                 await HandleLimitAsync(botClient, chatId, existingSession, text, cancellationToken);
                 break;
             case ConversationStage.Completed:
-                await botClient.SendTextMessageAsync(chatId, "Սկսեք նոր որոնում /start հրամանով։", cancellationToken: cancellationToken);
+                await botClient.SendTextMessageAsync(chatId, "Սկսեք նոր որոնում /search հրամանով։", cancellationToken: cancellationToken);
+                break;
+            case ConversationStage.SupportAwaitingMessage:
+                await HandleSupportMessageAsync(botClient, message, existingSession, cancellationToken);
                 break;
             default:
-                await SendWelcomeAsync(botClient, chatId, cancellationToken);
-                existingSession.Stage = ConversationStage.AwaitingSearchText;
+                await SendCorrectActionsAsync(botClient, chatId, cancellationToken);
                 break;
         }
     }
@@ -373,7 +387,7 @@ public class UpdateHandler : IUpdateHandler
         }
 
         session.Stage = ConversationStage.Completed;
-        await botClient.SendTextMessageAsync(chatId, "Որոնումն ավարտվեց։ Օգտագործեք /start հրամանը նոր որոնում սկսելու համար։", cancellationToken: cancellationToken);
+        await botClient.SendTextMessageAsync(chatId, "Որոնումն ավարտվեց։ Օգտագործեք /search հրամանը նոր որոնում սկսելու համար։", cancellationToken: cancellationToken);
     }
 
     private async Task SendProductAsync(ITelegramBotClient botClient, long chatId, Product product, CancellationToken cancellationToken)
@@ -404,20 +418,22 @@ public class UpdateHandler : IUpdateHandler
 
     private static async Task SendWelcomeAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
     {
-        var skipKeyboard = new ReplyKeyboardMarkup(new[]
-        {
+        await botClient.SendTextMessageAsync(chatId, "Բարի գալուստ 👋", cancellationToken: cancellationToken);
+        await SendInfoAsync(botClient, chatId, cancellationToken);
+    }
+
+    private static async Task SendSearchGuideAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
+    {
+        var skipKeyboard = new ReplyKeyboardMarkup
+        ([
             new KeyboardButton[] { "Բաց թողնել" }
-        })
+        ])
         {
             ResizeKeyboard = true,
             OneTimeKeyboard = true
         };
 
         var message = new StringBuilder();
-        message.AppendLine("Բարի գալուստ EazyFind!");
-        message.AppendLine("• Օգտագործեք /search ՝ նոր որոնում սկսելու համար։");
-        message.AppendLine("• Օգտագործեք /myalerts ՝ Ձեր ծանուցումները կառավարելու համար։");
-        message.AppendLine();
         message.AppendLine("Գրեք բառեր որոնման համար կամ սեղմեք 'Բաց թողնել' կոճակը ՝ ֆիլտրներով որոնում կատարելու համար։");
 
         await botClient.SendTextMessageAsync(chatId, message.ToString(), replyMarkup: skipKeyboard, cancellationToken: cancellationToken);
@@ -426,9 +442,85 @@ public class UpdateHandler : IUpdateHandler
     private static Task<Message> SendInfoAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
     {
         var message = new StringBuilder();
-        message.AppendLine("EazyFind-ը հետևում է Ձեր նախընտրած խանութներին և ապրանքներին։");
+        message.AppendLine("EazyFind-ը որոնում է ապրանքներ հայկական օնլայն խանութներում և տեղեկացնում նոր առաջարկների մասին։։");
+        message.AppendLine();
+        message.AppendLine("📦 Կարող եք փնտրել հետևյալ կատեգորիաներում՝");
+
+        var categories = Enum.GetValues<CategoryType>().Select(c => c.ToDisplayName()).ToList();
+
+        var groups = new[]
+        {
+            new { Title = "💻 Թվային տեխնիկա", Items = new[] { "Հեռախոսներ", "Պլանշետներ", "Նոթբուքներ", "Բոլորը մեկում համակարգիչներ", "Ստացիոնար համակարգիչներ", "Մոնիտորներ", "Հեռուստացույցներ" } },
+            new { Title = "🎧 Աքսեսուարներ", Items = new[] { "Ժամացույցներ", "Ականջակալներ", "Մկնիկներ", "Ստեղնաշարեր" } },
+            new { Title = "🎮 Խաղային սարքեր", Items = new[] { "Xbox", "Nintendo Switch", "PlayStation" } },
+            new { Title = "🏠 Կենցաղային տեխնիկա", Items = new[] { "Օդորակիչներ", "Սառնարաններ", "Ներկառուցվող սառնարաններ", "Side-by-Side սառնարաններ", "Գինու սառնարաններ", "Սառնարանների պարագաներ" } }
+        };
+
+        foreach (var group in groups)
+        {
+            var matching = categories
+                .Where(c => group.Items.Any(i => string.Equals(i, c, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            if (matching.Count > 0)
+            {
+                message.AppendLine();
+                message.AppendLine(group.Title + ":");
+                message.AppendLine("• " + string.Join(", ", matching));
+            }
+        }
+
+        var groupedNames = groups.SelectMany(g => g.Items).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var others = categories.Where(c => !groupedNames.Contains(c, StringComparer.OrdinalIgnoreCase)).ToList();
+
+        if (others.Count > 0)
+        {
+            message.AppendLine();
+            message.AppendLine("📦 Այլ կատեգորիաներ:");
+            message.AppendLine("• " + string.Join(", ", others));
+        }
+
+        message.AppendLine();
         message.AppendLine("• Որոնեք ակնթարթորեն Ձեր ընտրած խանութներում և կատոգորիաներում ՝ /search հրամանով։");
+        message.AppendLine();
         message.AppendLine("• Ստեղծեք անհատական ծանուցումներ /alert հրամանով ՝ նոր առաջարկների մասին անմիջապես տեղեկացվելու համար։");
+        message.AppendLine();
+        message.AppendLine("• Կասեցրեք, ակտիվացրեք, կամ ջնջեք ծանուցումները ցանկացած պահի։");
+
+        return botClient.SendTextMessageAsync(chatId, message.ToString(), cancellationToken: cancellationToken);
+    }
+
+    private async Task HandleSupportMessageAsync(ITelegramBotClient botClient, Message message, UserSession session, CancellationToken cancellationToken)
+    {
+        var chatId = message.Chat.Id;
+        var user = message.From;
+        var username = user?.Username != null ? $"@{user.Username}" : user?.FirstName ?? "Անհայտ օգտատեր";
+
+        // Send to your private support channel
+        await botClient.SendTextMessageAsync(
+            chatId: _botOptions.SupportChannelId,
+            text:
+                $"📩 <b>Նոր հաղորդագրություն</b>\n\n" +
+                $"👤 <b>From:</b> {username}\n" +
+                $"🆔 <b>ChatId:</b> {chatId}\n" +
+                $"💬 <b>Message:</b> {message.Text}",
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken);
+
+        await botClient.SendTextMessageAsync(chatId,
+            "✅ Շնորհակալություն, Ձեր հաղորդագրությունը գրանցված է։",
+            cancellationToken: cancellationToken);
+
+        session.Stage = ConversationStage.Completed;
+    }
+
+    private static Task<Message> SendCorrectActionsAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
+    {
+        var message = new StringBuilder();
+        message.AppendLine("• Որոնեք ակնթարթորեն Ձեր ընտրած խանութներում և կատոգորիաներում ՝ /search հրամանով։");
+        message.AppendLine();
+        message.AppendLine("• Ստեղծեք անհատական ծանուցումներ /alert հրամանով ՝ նոր առաջարկների մասին անմիջապես տեղեկացվելու համար։");
+        message.AppendLine();
         message.AppendLine("• Կասեցրեք, ակտիվացրեք, կամ ջնջեք ծանուցումները ցանկացած պահի։");
 
         return botClient.SendTextMessageAsync(chatId, message.ToString(), cancellationToken: cancellationToken);
