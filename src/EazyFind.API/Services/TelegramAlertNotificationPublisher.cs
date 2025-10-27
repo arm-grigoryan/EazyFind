@@ -15,7 +15,7 @@ internal class TelegramAlertNotificationPublisher(
 {
     public async Task PublishAsync(ProductAlert alert, IReadOnlyList<Product> products, int remainingCount, CancellationToken cancellationToken)
     {
-        await botClient.SendTextMessageAsync(alert.ChatId, $"Ձեր '{alert.SearchText}' բանալի բառերով ծանուցման համար գտնվել են նոր ապրանքներ 👇", cancellationToken: cancellationToken);
+        await botClient.SendTextMessageAsync(alert.ChatId, $"🔔 '{alert.SearchText}' բանալի բառերով ծանուցման համար գտնվել են նոր ապրանքներ 👇", cancellationToken: cancellationToken);
         foreach (var product in products)
         {
             var message = messageBuilder.Build(product);
@@ -43,7 +43,7 @@ internal class TelegramAlertNotificationPublisher(
 
         if (remainingCount > 0)
         {
-            await botClient.SendTextMessageAsync(alert.ChatId, $"+{remainingCount} more matches found. Use /search to find.", cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(alert.ChatId, $"Գտնվել են +{remainingCount} այլ ապրանքներ. Օգտագործեք /search հրամանը` դրանք գտնելու համար:", cancellationToken: cancellationToken);
         }
     }
 }

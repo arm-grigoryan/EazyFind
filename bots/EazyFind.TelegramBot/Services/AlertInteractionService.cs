@@ -600,7 +600,7 @@ public class AlertInteractionService
         }
 
         var buttons = alerts
-            .Select(alert => new[] { InlineKeyboardButton.WithCallbackData($"#{alert.Id} - {alert.SearchText}", $"{AlertDeletePrefix}{alert.Id}") })
+            .Select((alert, index) => new[] { InlineKeyboardButton.WithCallbackData($"#{index + 1} - {alert.SearchText}", $"{AlertDeletePrefix}{alert.Id}") })
             .ToArray();
 
         await botClient.SendTextMessageAsync(chatId, "Ընտրեք թե որ ծանուցումն եք ցանկանում ջնջել։", replyMarkup: new InlineKeyboardMarkup(buttons), cancellationToken: cancellationToken);
