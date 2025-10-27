@@ -1,13 +1,13 @@
+using EazyFind.API.Services;
 using EazyFind.Application;
 using EazyFind.Application.Alerts;
 using EazyFind.Application.Messaging;
-using EazyFind.API.Services;
 using EazyFind.Infrastructure;
 using EazyFind.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
 using Telegram.Bot;
-using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -43,7 +43,8 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<EazyFindDbContext>();
-    db.Database.Migrate();
+    if ((await db.Database.GetPendingMigrationsAsync()).Any())
+        await db.Database.MigrateAsync();
 }
 
 // Configure the HTTP request pipeline.

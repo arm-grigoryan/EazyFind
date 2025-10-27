@@ -59,8 +59,8 @@ services:
       dockerfile: bots/EazyFind.TelegramBot/Dockerfile
     container_name: eazyfind-bot
     depends_on:
-      eazyfind-db:
-        condition: service_healthy
+      eazyfind-api:
+        condition: service_started
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ConnectionStrings__EazyFindDatabase=${EAZYFIND_DB_CONN}
