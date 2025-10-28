@@ -36,6 +36,7 @@ public static class ScraperServiceCollectionExtensions
         services.AddHttpClient(nameof(VLVApiScraper));
         services.AddHttpClient(nameof(MobileCentreScraper));
         services.AddHttpClient(nameof(VenusScraper));
+        services.AddHttpClient(nameof(ZigzagScraper));
 
 
         services.AddHttpClient(nameof(AllSellScraper))
@@ -60,33 +61,33 @@ public static class ScraperServiceCollectionExtensions
 
                 return handler;
             });
-        services.AddHttpClient(nameof(ZigzagScraper))
-            .ConfigurePrimaryHttpMessageHandler(sp =>
-            {
-                var smartProxySettings = sp.GetRequiredService<IOptions<SmartProxySettings>>().Value;
+        //services.AddHttpClient(nameof(ZigzagScraper))
+        //    .ConfigurePrimaryHttpMessageHandler(sp =>
+        //    {
+        //        var smartProxySettings = sp.GetRequiredService<IOptions<SmartProxySettings>>().Value;
 
-                //byte[] certBytes = Convert.FromBase64String(smartProxySettings.CertBase64);
-                //var cert = new X509Certificate2(certBytes);
+        //        //byte[] certBytes = Convert.FromBase64String(smartProxySettings.CertBase64);
+        //        //var cert = new X509Certificate2(certBytes);
 
-                var proxyHost = smartProxySettings.Host;
-                var proxyPort = smartProxySettings.Port;
-                var proxyUsername = smartProxySettings.Username;
-                var proxyPassword = smartProxySettings.Password;
+        //        var proxyHost = smartProxySettings.Host;
+        //        var proxyPort = smartProxySettings.Port;
+        //        var proxyUsername = smartProxySettings.Username;
+        //        var proxyPassword = smartProxySettings.Password;
 
-                var handler = new HttpClientHandler
-                {
-                    Proxy = new WebProxy($"http://{proxyHost}:{proxyPort}")
-                    {
-                        Credentials = new NetworkCredential(proxyUsername, proxyPassword)
-                    },
-                    UseProxy = true,
-                    ServerCertificateCustomValidationCallback = (message, certChain, sslPolicyErrors, sslPolicyErrors2) => true
-                };
+        //        var handler = new HttpClientHandler
+        //        {
+        //            Proxy = new WebProxy($"http://{proxyHost}:{proxyPort}")
+        //            {
+        //                Credentials = new NetworkCredential(proxyUsername, proxyPassword)
+        //            },
+        //            UseProxy = true,
+        //            ServerCertificateCustomValidationCallback = (message, certChain, sslPolicyErrors, sslPolicyErrors2) => true
+        //        };
 
-                //handler.ClientCertificates.Add(cert);
+        //        //handler.ClientCertificates.Add(cert);
 
-                return handler;
-            });
+        //        return handler;
+        //    });
         services.AddHttpClient(nameof(YerevanMobileScraper))
             .ConfigurePrimaryHttpMessageHandler(sp =>
             {
