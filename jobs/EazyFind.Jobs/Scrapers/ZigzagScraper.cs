@@ -39,8 +39,11 @@ public class ZigzagScraper : IScraper
         {
             try
             {
-                var response = await httpClient.GetAsync(UrlBuilderHelper.AddOrUpdateQueryParam(
-                    pageUrl, new Dictionary<string, string> { { paginationPart, pageNumber.ToString() } }), cancellationToken);
+                var urlToCall = UrlBuilderHelper.AddOrUpdateQueryParam(
+                    pageUrl, new Dictionary<string, string> { { paginationPart, pageNumber.ToString() } });
+
+                var fullUrl = $"https://api.zenrows.com/v1/?apikey=ce56176bd3197e47a78881d1f6fe5c2e1a89e231&url={urlToCall}";
+                var response = await httpClient.GetAsync(fullUrl, cancellationToken);
 
                 if (!response.IsSuccessStatusCode)
                 {
