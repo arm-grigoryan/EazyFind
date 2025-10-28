@@ -4,6 +4,7 @@ using EazyFind.Jobs.Constants;
 using EazyFind.Jobs.Helpers;
 using EazyFind.Jobs.Scrapers.Interfaces;
 using HtmlAgilityPack;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Options;
 using System.Text.RegularExpressions;
 
@@ -38,6 +39,16 @@ public class ZigzagScraper : IScraper
         {
             try
             {
+                var response = await httpClient.GetAsync(UrlBuilderHelper.AddOrUpdateQueryParam(
+                    pageUrl, new Dictionary<string, string> { { paginationPart, pageNumber.ToString() } }), cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Failed call with error: {ErrorContent}, Reason Phrase: {Reason}", await response.Content.ReadAsStringAsync(cancellationToken), response.ReasonPhrase);
+                    foreach (var header in response.Headers)
+                        _logger.LogError("Failed call response header key-value: {HeaderKey}-{HeaderValue}", header.Key, header.Value);
+                }
+
                 var htmlString = await httpClient.GetStringAsync(UrlBuilderHelper.AddOrUpdateQueryParam(
                     pageUrl, new Dictionary<string, string> { { paginationPart, pageNumber.ToString() } }), cancellationToken);
 
