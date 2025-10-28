@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using EazyFind.Domain.Entities;
 using EazyFind.Domain.Extensions;
@@ -14,16 +14,16 @@ internal class ProductMessageBuilder : IProductMessageBuilder
 
         var captionBuilder = new StringBuilder();
         captionBuilder.AppendLine($"<b>{Escape(product.Name)}</b>");
-        captionBuilder.AppendLine($"Price: {product.Price:0.##}");
+        captionBuilder.AppendLine($"Գին: {product.Price:0.##}");
 
         var storeName = product.StoreCategory?.Store?.Name;
         if (!string.IsNullOrWhiteSpace(storeName))
         {
-            captionBuilder.AppendLine($"Store: {Escape(storeName)}");
+            captionBuilder.AppendLine($"Խանութ: {Escape(storeName)}");
         }
         else if (product.StoreCategory is { StoreKey: var storeKey })
         {
-            captionBuilder.AppendLine($"Store: {Escape(storeKey.ToDisplayName())}");
+            captionBuilder.AppendLine($"Խանութ: {Escape(storeKey.ToDisplayName())}");
         }
 
         string categoryLabel = null;
@@ -44,10 +44,10 @@ internal class ProductMessageBuilder : IProductMessageBuilder
 
         if (!string.IsNullOrWhiteSpace(categoryLabel))
         {
-            captionBuilder.AppendLine($"Category: {Escape(categoryLabel)}");
+            captionBuilder.AppendLine($"Կատեգորիա: {Escape(categoryLabel)}");
         }
 
-        captionBuilder.AppendLine($"Last synced: {product.LastSyncedAt:G}");
+        captionBuilder.AppendLine($"Թարմացվել է: {product.LastSyncedAt.AddHours(4):G}");
 
         var caption = captionBuilder.ToString().Trim();
         var photo = string.IsNullOrWhiteSpace(product.ImageUrl) ? null : product.ImageUrl;
