@@ -1,6 +1,7 @@
 ﻿using EazyFind.Domain.Entities;
 using EazyFind.Jobs.Configuration;
 using EazyFind.Jobs.Constants;
+using EazyFind.Jobs.Helpers;
 using EazyFind.Jobs.Scrapers.Interfaces;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
@@ -28,7 +29,7 @@ public class ThreeDPlanetScraper : IScraper
     {
         var httpClient = _httpClientFactory.CreateClient(nameof(ThreeDPlanetScraper));
 
-        var paginationPart = "/page/{0}/";
+        var paginationPart = "page";
         var pageNumber = 1;
 
         List<Product> internalProducts = [];
@@ -37,13 +38,14 @@ public class ThreeDPlanetScraper : IScraper
         {
             try
             {
-                var htmlString = await httpClient.GetStringAsync($"{pageUrl}{string.Format(paginationPart, pageNumber)}?per_page=36", cancellationToken);
+                var htmlString = await httpClient.GetStringAsync(UrlBuilderHelper.AddOrUpdateQueryParam(
+                    pageUrl, new Dictionary<string, string> { { paginationPart, pageNumber.ToString() } }), cancellationToken);
 
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlString);
 
                 var products = htmlDoc.DocumentNode.Descendants("div")
-                                                   .Where(x => x.HasClass("product-grid-item"));
+                                                   .Where(x => x.HasClass("product-card"));
 
                 if (products?.Any() is not true)
                 {
@@ -58,7 +60,7 @@ public class ThreeDPlanetScraper : IScraper
                     try
                     {
                         var productUrl = product.Descendants("a")
-                                                .First(x => x.HasClass("product-image-link"))
+                                                .First()
                                                 .GetAttributeValue("href", string.Empty);
 
                         var imageUrl = product.Descendants("img")
@@ -66,13 +68,11 @@ public class ThreeDPlanetScraper : IScraper
                                               .GetAttributeValue("src", string.Empty);
 
                         var name = product.Descendants("h3")
-                                          .First(x => x.HasClass("product-title"))
-                                          .ChildNodes
-                                          .First(x => x.OriginalName == "a")
+                                          .First()
                                           .InnerText;
 
-                        var priceText = product.Descendants("span")
-                                               .First(x => x.HasClass("woocommerce-Price-amount"))
+                        var priceText = product.Descendants("a")
+                                               .First()
                                                .InnerText
                                                .Trim();
 
@@ -93,8 +93,6 @@ public class ThreeDPlanetScraper : IScraper
                         internalProducts.Add(internalProduct);
                         index++;
                         errorCount = 0;
-
-                        //Console.WriteLine(internalProduct);
                     }
                     catch (Exception ex)
                     {
