@@ -69,7 +69,8 @@ public class ThreeDPlanetScraper : IScraper
 
                         var name = product.Descendants("h3")
                                           .First()
-                                          .InnerText;
+                                          .InnerText
+                                          .Trim();
 
                         var priceText = product.Descendants("a")
                                                .First()

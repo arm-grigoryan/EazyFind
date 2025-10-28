@@ -69,7 +69,8 @@ public class VenusScraper : IScraper
 
                         var name = product.Descendants("h4").First()
                                           .Descendants("a").First()
-                                          .InnerText;
+                                          .InnerText
+                                          .Trim();
 
                         var priceText = product.Descendants("div")
                                                .FirstOrDefault(x => x.HasClass("price"))

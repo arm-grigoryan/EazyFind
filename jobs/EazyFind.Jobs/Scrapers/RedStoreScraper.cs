@@ -70,7 +70,8 @@ public class RedStoreScraper : IScraper
 
                         var name = product.Descendants("span")
                                           .First(x => x.HasClass("title"))
-                                          .InnerText;
+                                          .InnerText
+                                          .Trim();
 
                         var priceText = product.Descendants("span")
                                                .First(x => x.HasClass("priceCashVariant"))
