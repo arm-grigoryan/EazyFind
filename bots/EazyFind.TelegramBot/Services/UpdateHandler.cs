@@ -7,7 +7,6 @@ using EazyFind.TelegramBot.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text;
-using System.Threading;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
@@ -442,7 +441,7 @@ public class UpdateHandler : IUpdateHandler
     private static Task<Message> SendInfoAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
     {
         var message = new StringBuilder();
-        message.AppendLine("EazyFind-ը որոնում է ապրանքներ հայկական օնլայն խանութներում և տեղեկացնում նոր առաջարկների մասին։։");
+        message.AppendLine("EazyFind-ը որոնում է ապրանքներ հայկական օնլայն խանութներում և տեղեկացնում նոր առաջարկների մասին։");
         message.AppendLine();
         message.AppendLine("📦 Կարող եք փնտրել հետևյալ կատեգորիաներում՝");
 

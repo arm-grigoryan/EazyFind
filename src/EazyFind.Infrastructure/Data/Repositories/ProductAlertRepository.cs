@@ -20,7 +20,7 @@ internal class ProductAlertRepository(EazyFindDbContext dbContext) : IProductAle
         return await dbContext.ProductAlerts
             .AsNoTracking()
             .Where(a => a.ChatId == chatId)
-            .OrderByDescending(a => a.CreatedAtUtc)
+            .OrderBy(a => a.Id)
             .ToListAsync(cancellationToken);
     }
 

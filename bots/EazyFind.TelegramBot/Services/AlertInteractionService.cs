@@ -1,16 +1,13 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Globalization;
-using System.Text;
 using EazyFind.Application.Alerts;
 using EazyFind.Domain.Entities;
 using EazyFind.Domain.Enums;
 using EazyFind.Domain.Extensions;
 using EazyFind.TelegramBot.Models;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
+using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace EazyFind.TelegramBot.Services;
@@ -147,6 +144,14 @@ public class AlertInteractionService
 
     private async Task StartAlertCreationAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
     {
+        var existingAlerts = await _alertService.ListAsync(chatId, cancellationToken);
+        if (existingAlerts.Count >= 5)
+        {
+            await botClient.SendTextMessageAsync(chatId, "Դուք կարող եք ստեղծել առավելագույնը 5 ծանուցում: Օգտագործեք /myalerts հրամանը` ներկայիս ծանուցումները կառավարելու համար:",
+                cancellationToken: cancellationToken);
+            return;
+        }
+
         _stateService.Clear(chatId);
         var session = _stateService.GetOrCreate(chatId);
         session.Stage = AlertConversationStage.AwaitingKeywords;
@@ -160,7 +165,7 @@ public class AlertInteractionService
         await botClient.SendTextMessageAsync(chatId, "Գրեք բանալի բառեր ծանուցում ստեղծելու համար (առնվազն 3 սիմվոլ)։", replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
     }
 
-    private async Task HandleKeywordsAsync(ITelegramBotClient botClient, long chatId, AlertCreationSession session, string text, CancellationToken cancellationToken)
+    private static async Task HandleKeywordsAsync(ITelegramBotClient botClient, long chatId, AlertCreationSession session, string text, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(text) || text.Length < 3)
         {
@@ -246,7 +251,7 @@ public class AlertInteractionService
         await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
     }
 
-    private InlineKeyboardMarkup BuildAlertStoreKeyboard(AlertCreationSession session)
+    private static InlineKeyboardMarkup BuildAlertStoreKeyboard(AlertCreationSession session)
     {
         var rows = new List<InlineKeyboardButton[]>();
         foreach (var chunk in Enum.GetValues<StoreKey>().Chunk(2))
@@ -306,7 +311,7 @@ public class AlertInteractionService
         await botClient.SendTextMessageAsync(chatId, "Գրեք մաքսիմում գինը կամ սեղմեք ՝Բաց թողնել՝ կոճակը", replyMarkup: BuildSkipKeyboard(), cancellationToken: cancellationToken);
     }
 
-    private async Task HandleMaxPriceAsync(ITelegramBotClient botClient, long chatId, AlertCreationSession session, string text, CancellationToken cancellationToken)
+    private static async Task HandleMaxPriceAsync(ITelegramBotClient botClient, long chatId, AlertCreationSession session, string text, CancellationToken cancellationToken)
     {
         if (text.Equals("Բաց թողնել", StringComparison.OrdinalIgnoreCase))
         {
@@ -341,7 +346,7 @@ public class AlertInteractionService
         };
     }
 
-    private async Task ShowAlertSummaryAsync(ITelegramBotClient botClient, long chatId, AlertCreationSession session, CancellationToken cancellationToken)
+    private static async Task ShowAlertSummaryAsync(ITelegramBotClient botClient, long chatId, AlertCreationSession session, CancellationToken cancellationToken)
     {
         var summary = new StringBuilder();
         summary.AppendLine("Ծանուցման ամփոփում:");
@@ -595,7 +600,7 @@ public class AlertInteractionService
         }
 
         var buttons = alerts
-            .Select(alert => new[] { InlineKeyboardButton.WithCallbackData($"#{alert.Id} - {alert.SearchText}", $"{AlertDeletePrefix}{alert.Id}") })
+            .Select((alert, index) => new[] { InlineKeyboardButton.WithCallbackData($"#{index + 1} - {alert.SearchText}", $"{AlertDeletePrefix}{alert.Id}") })
             .ToArray();
 
         await botClient.SendTextMessageAsync(chatId, "Ընտրեք թե որ ծանուցումն եք ցանկանում ջնջել։", replyMarkup: new InlineKeyboardMarkup(buttons), cancellationToken: cancellationToken);
