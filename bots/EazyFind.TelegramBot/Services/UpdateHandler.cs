@@ -114,7 +114,8 @@ public class UpdateHandler : IUpdateHandler
 
         if (string.Equals(text, "/start", StringComparison.OrdinalIgnoreCase))
         {
-            var session = _stateService.Reset(chatId);
+            _logger.LogInformation("BOT_USAGE | Action=Start | ChatId={ChatId}", chatId);
+            _ = _stateService.Reset(chatId);
             await SendWelcomeAsync(botClient, chatId, cancellationToken);
             return;
         }
@@ -182,7 +183,7 @@ public class UpdateHandler : IUpdateHandler
         }
     }
 
-    private static async Task HandleSearchTextAsync(ITelegramBotClient botClient, long chatId, UserSession session, string text, CancellationToken cancellationToken)
+    private async Task HandleSearchTextAsync(ITelegramBotClient botClient, long chatId, UserSession session, string text, CancellationToken cancellationToken)
     {
         session.SelectedStores.Clear();
         session.SelectedCategories.Clear();
@@ -205,6 +206,8 @@ public class UpdateHandler : IUpdateHandler
         {
             session.SearchText = text;
             session.Stage = ConversationStage.SelectingStores;
+
+            _logger.LogInformation("BOT_USAGE | Action=Search | ChatId={ChatId} | Query=\"{Query}\"", chatId, text);
 
             await botClient.SendTextMessageAsync(chatId, "Ընտրեք խանութները` որոնման համար (առնվազն 1 հատ).", replyMarkup: new ReplyKeyboardRemove(), cancellationToken: cancellationToken);
             var prompt = await botClient.SendTextMessageAsync(chatId, "Օգտագործեք կոճակները` խանութներ ընտրելու համար։ Սեղմեք 'Բոլոր խանութները' կամ 'Հաստատել' վերջացնելու համար։", replyMarkup: BuildStoreKeyboard(session), cancellationToken: cancellationToken);
@@ -384,6 +387,9 @@ public class UpdateHandler : IUpdateHandler
                 await SendProductAsync(botClient, chatId, product, cancellationToken);
             }
         }
+
+        _logger.LogInformation("BOT_USAGE | Action=SearchCompleted | ChatId={ChatId} | Found={FoundCount} | Query=\"{Query}\"",
+            chatId, response?.Items?.Count ?? 0, session.SearchText);
 
         session.Stage = ConversationStage.Completed;
         await botClient.SendTextMessageAsync(chatId, "Որոնումն ավարտվեց։ Օգտագործեք /search հրամանը նոր որոնում սկսելու համար։", cancellationToken: cancellationToken);
