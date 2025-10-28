@@ -43,14 +43,14 @@ public class ZigzagScraper : IScraper
                     pageUrl, new Dictionary<string, string> { { paginationPart, pageNumber.ToString() } });
 
                 var fullUrl = $"https://api.zenrows.com/v1/?apikey=ce56176bd3197e47a78881d1f6fe5c2e1a89e231&url={urlToCall}";
-                //var response = await httpClient.GetAsync(fullUrl, cancellationToken);
+                var response = await httpClient.GetAsync(fullUrl, cancellationToken);
 
-                //if (!response.IsSuccessStatusCode)
-                //{
-                //    _logger.LogError("Failed call with error: {ErrorContent}, Reason Phrase: {Reason}", await response.Content.ReadAsStringAsync(cancellationToken), response.ReasonPhrase);
-                //    foreach (var header in response.Headers)
-                //        _logger.LogError("Failed call response header key-value: {HeaderKey}-{HeaderValue}", header.Key, header.Value);
-                //}
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Failed call with error: {ErrorContent}, Reason Phrase: {Reason}", await response.Content.ReadAsStringAsync(cancellationToken), response.ReasonPhrase);
+                    foreach (var header in response.Headers)
+                        _logger.LogError("Failed call response header key-value: {HeaderKey}-{HeaderValue}", header.Key, header.Value);
+                }
 
                 var htmlString = await httpClient.GetStringAsync(fullUrl, cancellationToken);
 
