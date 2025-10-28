@@ -85,7 +85,7 @@ public class ThreeDPlanetScraper : IScraper
                         var internalProduct = new Product
                         {
                             Url = productUrl,
-                            ImageUrl = imageUrl,
+                            ImageUrl = string.Concat("https://3dplanet.am", imageUrl),
                             Name = name,
                             Price = price
                         };
