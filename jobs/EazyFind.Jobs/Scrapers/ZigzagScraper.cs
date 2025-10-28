@@ -15,15 +15,18 @@ public class ZigzagScraper : IScraper
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ZigzagScraper> _logger;
     private readonly ScraperConfigs _jobConfigs;
+    private readonly ZenRowsSettings _zenRowsSettings;
 
     public ZigzagScraper(
         IHttpClientFactory httpClientFactory,
         ILogger<ZigzagScraper> logger,
-        IOptions<ScraperConfigs> options)
+        IOptions<ScraperConfigs> options,
+        IOptions<ZenRowsSettings> zenRowsOptions)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _jobConfigs = options.Value;
+        _zenRowsSettings = zenRowsOptions.Value;
     }
 
     public async Task<List<Product>> ScrapeAsync(string pageUrl, CancellationToken cancellationToken)
@@ -42,15 +45,7 @@ public class ZigzagScraper : IScraper
                 var urlToCall = UrlBuilderHelper.AddOrUpdateQueryParam(
                     pageUrl, new Dictionary<string, string> { { paginationPart, pageNumber.ToString() } });
 
-                var fullUrl = $"https://api.zenrows.com/v1/?apikey=ce56176bd3197e47a78881d1f6fe5c2e1a89e231&url={urlToCall}&js_render=true";
-                var response = await httpClient.GetAsync(fullUrl, cancellationToken);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogError("Failed call with error: {ErrorContent}, Reason Phrase: {Reason}", await response.Content.ReadAsStringAsync(cancellationToken), response.ReasonPhrase);
-                    foreach (var header in response.Headers)
-                        _logger.LogError("Failed call response header key-value: {HeaderKey}-{HeaderValue}", header.Key, header.Value);
-                }
+                var fullUrl = $"{_zenRowsSettings.ApiUrl}?apikey={_zenRowsSettings.ApiKey}&url={urlToCall}&js_render=true";
 
                 var htmlString = await httpClient.GetStringAsync(fullUrl, cancellationToken);
 

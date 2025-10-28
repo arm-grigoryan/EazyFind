@@ -50,6 +50,7 @@ services.Configure<JobConfigs>(configuration.GetSection(nameof(JobConfigs)));
 services.Configure<ScraperApiSettings>(configuration.GetSection(nameof(ScraperApiSettings)));
 services.Configure<BrightDataSettings>(configuration.GetSection(nameof(BrightDataSettings)));
 services.Configure<SmartProxySettings>(configuration.GetSection(nameof(SmartProxySettings)));
+services.Configure<ZenRowsSettings>(configuration.GetSection(nameof(ZenRowsSettings)));
 
 services.AddCoreServices()
         .AddInfrastructureServices(configuration)
