@@ -1,11 +1,11 @@
 using EazyFind.Application;
-using EazyFind.Infrastructure;
 using EazyFind.Application.Messaging;
+using EazyFind.Infrastructure;
 using EazyFind.TelegramBot.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Serilog;
 using Telegram.Bot;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -16,16 +16,21 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.PostgreSQL(
+        builder.Configuration.GetConnectionString("EazyFindDatabase"),
+        "public.logs",
+        needAutoCreateTable: true)
+    .WriteTo.Console()
+    .CreateLogger();
+
+builder.Logging.AddSerilog(Log.Logger);
+
 builder.Services.Configure<TelegramBotOptions>(builder.Configuration.GetSection(TelegramBotOptions.SectionName));
 
 builder.Services.AddCoreServices()
                 .AddInfrastructureServices(builder.Configuration);
-
-builder.Services.AddLogging(logging =>
-{
-    logging.ClearProviders();
-    logging.AddConsole();
-});
 
 builder.Services.AddSingleton<ConversationStateService>();
 builder.Services.AddSingleton<AlertConversationStateService>();
