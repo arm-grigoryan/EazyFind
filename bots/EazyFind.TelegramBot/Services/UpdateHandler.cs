@@ -402,7 +402,8 @@ public class UpdateHandler : IUpdateHandler
         InlineKeyboardMarkup? markup = null;
         if (!string.IsNullOrWhiteSpace(message.Url))
         {
-            markup = new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("Տեսնել խանութում", message.Url));
+            var redirectUrl = $"https://eazyfind.duckdns.org/api/redirect?url={Uri.EscapeDataString(message.Url)}&chatId={chatId}";
+            markup = new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("Տեսնել խանութում", redirectUrl));
         }
 
         try
