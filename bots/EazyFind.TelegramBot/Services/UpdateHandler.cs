@@ -400,7 +400,7 @@ public class UpdateHandler : IUpdateHandler
     {
         var message = _productMessageBuilder.Build(product);
 
-        InlineKeyboardMarkup? markup = null;
+        InlineKeyboardMarkup markup = null;
         if (!string.IsNullOrWhiteSpace(message.Url))
         {
             var signature = ComputeHmacSha256(_botOptions.RedirectSecret, message.Url, chatId);
