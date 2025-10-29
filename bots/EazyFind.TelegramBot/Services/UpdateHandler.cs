@@ -404,7 +404,7 @@ public class UpdateHandler : IUpdateHandler
         if (!string.IsNullOrWhiteSpace(message.Url))
         {
             var signature = ComputeHmacSha256(_botOptions.RedirectSecret, message.Url, chatId);
-            var redirectUrl = $"https://eazyfind.duckdns.org/api/redirect?url={Uri.EscapeDataString(message.Url)}&chatId={chatId}&sig={signature}";
+            var redirectUrl = $"https://eazyfind.duckdns.org/api/redirect?url={Uri.EscapeDataString(message.Url)}&chatId={chatId}&sig={Uri.EscapeDataString(signature)}";
             markup = new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("Տեսնել խանութում", redirectUrl));
         }
 
