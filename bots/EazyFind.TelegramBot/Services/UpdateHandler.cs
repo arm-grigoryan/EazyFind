@@ -6,6 +6,7 @@ using EazyFind.Domain.Extensions;
 using EazyFind.TelegramBot.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Security.Cryptography;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -402,7 +403,8 @@ public class UpdateHandler : IUpdateHandler
         InlineKeyboardMarkup? markup = null;
         if (!string.IsNullOrWhiteSpace(message.Url))
         {
-            var redirectUrl = $"https://eazyfind.duckdns.org/api/redirect?url={Uri.EscapeDataString(message.Url)}&chatId={chatId}";
+            var signature = ComputeHmacSha256(_botOptions.RedirectSecret, message.Url, chatId);
+            var redirectUrl = $"https://eazyfind.duckdns.org/api/redirect?url={Uri.EscapeDataString(message.Url)}&chatId={chatId}&sig={signature}";
             markup = new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("Տեսնել խանութում", redirectUrl));
         }
 
@@ -587,5 +589,15 @@ public class UpdateHandler : IUpdateHandler
         });
 
         return new InlineKeyboardMarkup(rows);
+    }
+
+    private static string ComputeHmacSha256(string secret, string url, long chatId)
+    {
+        var keyBytes = Encoding.UTF8.GetBytes(secret);
+        var messageBytes = Encoding.UTF8.GetBytes($"{chatId}:{url}");
+
+        using var hmac = new HMACSHA256(keyBytes);
+        var hash = hmac.ComputeHash(messageBytes);
+        return Convert.ToBase64String(hash);
     }
 }
