@@ -6,6 +6,7 @@ using EazyFind.Infrastructure;
 using EazyFind.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Serilog;
 using System.Text.Json.Serialization;
 using Telegram.Bot;
 
@@ -13,7 +14,21 @@ var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 var configuration = builder.Configuration;
 
-// TODOME configure logging
+builder.Logging.ClearProviders();
+
+builder.Host.UseSerilog((context, configuration) =>
+{
+    var connectionString = context.Configuration.GetConnectionString("EazyFindDatabase");
+
+    configuration.WriteTo.PostgreSQL(connectionString, "public.logs", needAutoCreateTable: true)
+        .MinimumLevel.Information();
+
+    if (!context.HostingEnvironment.IsProduction())
+    {
+        configuration.WriteTo.Console()
+        .MinimumLevel.Information();
+    }
+});
 
 services.AddControllers()
         .AddJsonOptions(opt => opt.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -55,8 +70,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-//app.UseSerilogRequestLogging();
 
 app.UseAuthorization();
 

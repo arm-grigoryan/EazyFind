@@ -6,4 +6,5 @@ public class TelegramBotOptions
 
     public string BotToken { get; set; }
     public long SupportChannelId { get; set; }
+    public string RedirectSecret { get; set; }
 }
